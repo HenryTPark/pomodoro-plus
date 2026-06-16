@@ -180,7 +180,7 @@ export default function Timer() {
     mode === "focus" ? "Focus" : mode === "break" ? "Break" : "Long Break";
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-10 py-10 px-6 text-slate-100">
+    <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 px-4 py-4 text-slate-100">
       {/* Template Selector */}
       <div className="w-full max-w-3xl flex justify-center">
         <TemplateLabels />
@@ -188,13 +188,13 @@ export default function Timer() {
 
       {/* Session Info */}
       <div className="text-center">
-        <p className="font-medium uppercase tracking-[0.24em] text-slate-400 text-2xl">
+        <p className="font-medium uppercase tracking-[0.24em] text-slate-400 text-[clamp(1rem,2vw,1.25rem)]">
           {modeLabel} • Session {count} of {cycle}
         </p>
       </div>
 
       {/* Circular Progress Bar */}
-      <div className="w-80 h-80">
+      <div className="w-[min(70vw,40vh)] h-[min(70vw,40vh)] max-w-[45vh] max-h-[45vh]">
         <CircularProgressbar
           value={percentage}
           text={`${minutes}:${seconds.toString().padStart(2, "0")}`}
@@ -203,59 +203,59 @@ export default function Timer() {
       </div>
 
       {/* Control Buttons */}
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <Button
           variant="outline"
-          size="3xl"
+          size="xl"
           onClick={() => addTime(1)}
           title="Add 1 minute"
-          className="text-4xl font-semibold"
+          className="text-2xl font-semibold"
         >
           +1
         </Button>
 
-        <Button variant="outline" size="3xl" onClick={stop} title="Stop timer">
-          <Square className="size-10" />
+        <Button variant="outline" size="xl" onClick={stop} title="Stop timer">
+          <Square className="size-7" />
         </Button>
 
         {isPaused ? (
           <Button
-            size="3xl"
+            size="xl"
             onClick={() => setPaused(false)}
             title="Start timer"
             variant="outline"
           >
-            <Play className="size-10" />
+            <Play className="size-7" />
           </Button>
         ) : (
           <Button
-            size="3xl"
+            size="xl"
             onClick={() => setPaused(true)}
             title="Pause timer"
             variant="outline"
           >
-            <Pause className="size-10" />
+            <Pause className="size-7" />
           </Button>
         )}
 
         <Button
           variant="outline"
-          size="3xl"
+          size="xl"
           onClick={() => {
             switchMode();
             setPaused(false);
           }}
           title="Skip to next session"
         >
-          <StepForward className="size-10" />
+          <StepForward className="size-7" />
         </Button>
 
         <Button
           variant="outline"
-          size="3xl"
+          size="xl"
           onClick={() => addTime(5)}
           title="Add 5 minutes"
-          className="text-4xl font-semibold"
+          className="text-2xl font-semibold"
         >
           +5
         </Button>

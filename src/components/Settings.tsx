@@ -61,32 +61,34 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-2 pt-5 px-4 text-slate-100 sm:px-6 lg:px-8">
+    <div className="flex h-full min-h-0 flex-col items-center justify-start gap-2 px-2 py-2 text-slate-100 sm:px-3 lg:px-4">
       {/* Template Selection */}
-      <div className="mx-auto w-full sm:w-160 max-w-4xl rounded-3xl border border-slate-800 bg-slate-950/70 p-8 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
+      <div className="w-full max-w-[min(100vw-1rem,72rem)] rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
         <div className="space-y-3">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-3xl font-semibold text-white">Templates</h2>
-              <p className="text-xl text-slate-400">
+              <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold text-white">Templates</h2>
+              <p className="text-[clamp(0.95rem,1.7vw,1.05rem)] text-slate-400">
                 Choose or modify your focus presets.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               <EditModal />
               <DeleteModal />
               <AddModal />
             </div>
           </div>
-          <TemplateLabels />
+          <div className="max-h-[calc(100vh-20vh)] overflow-hidden">
+            <TemplateLabels />
+          </div>
         </div>
       </div>
 
       {/* Sliders */}
-      <div className="mx-auto w-full sm:w-160 max-w-4xl space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-8 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold text-white">Timing</h2>
-          <p className="text-xl text-slate-400">
+      <div className="w-full max-w-[min(100vw-1rem,72rem)] space-y-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
+        <div className="space-y-2">
+          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold text-white">Timing</h2>
+          <p className="text-[clamp(0.95rem,1.7vw,1.05rem)] text-slate-400">
             Adjust focus and break lengths for your current template.
           </p>
         </div>

@@ -29,13 +29,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.className} ${
         geistMono.className
-      } h-full antialiased dark`}
+      } h-full min-h-screen antialiased dark`}
     >
-      <body className="flex flex-col h-full bg-background text-foreground">
+      <body className="flex min-h-screen min-w-full flex-col bg-background text-foreground overflow-hidden">
         <Providers>
           <NavBar />
           {/* <main className="flex flex-col justify-center items-center m-auto"> */}
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 min-h-0">{children}</main>
         </Providers>
       </body>
     </html>

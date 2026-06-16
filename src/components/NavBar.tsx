@@ -11,44 +11,29 @@ export default function NavBar() {
   return (
     <nav className="border-b border-slate-800 bg-slate-950/95 shadow-xl shadow-slate-950/20 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex min-h-[9vh] items-center justify-between">
           <div className="shrink-0">
-            <h1 className="text-5xl font-semibold tracking-tight text-slate-50 cursor-pointer">
+            <h1 className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-slate-50 cursor-pointer">
               Pomodoro+
             </h1>
-            {/* <p className="text-lg text-slate-400">Focus with a modern timer</p> */}
           </div>
 
           <div className="flex items-center gap-3">
             <Button
               variant="secondary"
-              size="4xl"
+              size="xl"
               onClick={toggleShowSettings}
               title={showSettings ? "Back to Timer" : "Settings"}
               className="cursor-pointer"
             >
-              {/* <Settings className="size-8" />
-              {showSettings ? "Timer" : "Settings"} */}
-
               <div className="flex justify-around items-center">
                 {showSettings ? (
-                  <>
-                    {/* Timer */}
-                    <Timer className="size-8" />
-                  </>
+                  <Timer className="size-7" />
                 ) : (
-                  <>
-                    {/* Settings */}
-                    <Settings className="size-8" />
-                  </>
+                  <Settings className="size-7" />
                 )}
               </div>
             </Button>
-
-            {/* //TODO: Login */}
-            {/* <Button variant="outline" size="4xl" className="cursor-pointer">
-              Login
-            </Button> */}
           </div>
         </div>
       </div>

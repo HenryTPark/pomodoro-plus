@@ -22,10 +22,10 @@ export default function CycleSlider({
   onChange,
 }: CycleSliderProps) {
   return (
-    <div className="w-full px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
-        <Label className="text-lg font-medium text-slate-400">{label}</Label>
-        <span className="text-lg font-semibold text-slate-400 min-w-fit">
+    <div className="w-full px-3 py-2">
+      <div className="flex items-center justify-between gap-3">
+        <Label className="text-base font-medium text-slate-400">{label}</Label>
+        <span className="text-base font-semibold text-slate-400 min-w-fit">
           {value}
         </span>
       </div>

@@ -27,20 +27,20 @@ export default function TemplateLabels() {
   };
 
   return (
-    <div className="w-3/5 max-w-3xl h-full py-2">
+    <div className="w-full max-w-full py-2">
       <Select
         className="w-full"
         value={templateLabel}
         onValueChange={handleChange}
       >
-        <SelectTrigger className="text-2xl w-full p-5" size="lg">
+        <SelectTrigger className="text-xl w-full p-4" size="lg">
           <SelectValue placeholder="Select a template" />
         </SelectTrigger>
 
-        <SelectContent className="w-full p-5">
+        <SelectContent className="w-full p-3">
           {Object.keys(templates).map((templateName) => (
             <SelectItem
-              className="text-2xl"
+              className="text-lg"
               key={templateName}
               value={templateName}
             >
