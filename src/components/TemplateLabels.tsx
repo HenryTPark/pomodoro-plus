@@ -8,32 +8,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSettingsStore } from "@/store";
+import { useSettingsStore, useTimerStore } from "@/store";
 
-export default function TemplateLabels() {
+interface TemplateLabelsProps {
+  compact?: boolean;
+}
+
+export default function TemplateLabels({ compact = false }: TemplateLabelsProps) {
   const {
     templates,
     templateLabel,
     changeTemplate,
     setTemplateLabel,
-    setCount,
   } = useSettingsStore();
+  const resetTimer = useTimerStore((state) => state.resetTimer);
 
   const handleChange = (templateName: string) => {
     const templateObject = templates[templateName];
     changeTemplate(templateObject);
-    setCount(1);
     setTemplateLabel(templateName);
+    resetTimer(templateObject.focus * 60, "focus");
   };
 
   return (
-    <div className="w-full max-w-full py-2">
+    <div className={`w-full max-w-full ${compact ? "py-0" : "py-2"}`}>
       <Select
         className="w-full"
         value={templateLabel}
         onValueChange={handleChange}
       >
-        <SelectTrigger className="text-xl w-full p-4" size="lg">
+        <SelectTrigger
+          className={`w-full cursor-pointer ${compact ? "text-sm" : "p-4 text-xl"}`}
+          size={compact ? "sm" : "lg"}
+        >
           <SelectValue placeholder="Select a template" />
         </SelectTrigger>
 

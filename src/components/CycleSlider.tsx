@@ -11,6 +11,7 @@ interface CycleSliderProps {
   step?: number;
   label: string;
   onChange: (value: number) => void;
+  compact?: boolean;
 }
 
 export default function CycleSlider({
@@ -20,12 +21,19 @@ export default function CycleSlider({
   step = 1,
   label,
   onChange,
+  compact = false,
 }: CycleSliderProps) {
   return (
-    <div className="w-full px-3 py-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label className="text-base font-medium text-slate-400">{label}</Label>
-        <span className="text-base font-semibold text-slate-400 min-w-fit">
+    <div className={`w-full ${compact ? "px-1 py-0.5" : "px-3 py-2"}`}>
+      <div className="flex items-center justify-between gap-2">
+        <Label
+          className={`font-medium text-slate-400 ${compact ? "text-xs" : "text-base"}`}
+        >
+          {label}
+        </Label>
+        <span
+          className={`min-w-fit font-semibold text-slate-400 ${compact ? "text-xs" : "text-base"}`}
+        >
           {value}
         </span>
       </div>
@@ -36,7 +44,7 @@ export default function CycleSlider({
         min={min}
         max={max}
         step={step}
-        className="mt-2"
+        className={compact ? "mt-1" : "mt-2"}
       />
     </div>
   );

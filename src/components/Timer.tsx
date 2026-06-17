@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Play, Pause, StepForward, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSettingsStore } from "@/store";
+import {
+  getSecondsForMode,
+  usePreferencesStore,
+  useSessionHistoryStore,
+  useSettingsStore,
+  useTimerStore,
+  type TimerMode,
+} from "@/store";
 import TemplateLabels from "@/components/TemplateLabels";
 
 const red = "#f44336";
@@ -18,22 +25,41 @@ export default function Timer() {
     breakMinutes,
     longBreakMinutes,
     cycle,
-    count,
-    setCount,
   } = useSettingsStore();
 
-  const [isPaused, setIsPaused] = useState(true);
-  const [mode, setMode] = useState<"focus" | "break" | "longBreak">("focus");
-  const [secondsLeft, setSecondsLeft] = useState(focusMinutes * 60);
+  const {
+    isPaused,
+    mode,
+    secondsLeft,
+    count,
+    setIsPaused,
+    setMode,
+    setSecondsLeft,
+    setCount,
+  } = useTimerStore();
+
+  const soundEnabled = usePreferencesStore((state) => state.soundEnabled);
+  const logCompleted = useSessionHistoryStore((state) => state.logCompleted);
+  const logSkipped = useSessionHistoryStore((state) => state.logSkipped);
+  const logExtended = useSessionHistoryStore((state) => state.logExtended);
 
   const secondsLeftRef = useRef(secondsLeft);
   const isPausedRef = useRef(isPaused);
   const modeRef = useRef(mode);
+  const countRef = useRef(count);
 
-  function playSound() {
-    // Create a simple beep sound
+  secondsLeftRef.current = secondsLeft;
+  isPausedRef.current = isPaused;
+  modeRef.current = mode;
+  countRef.current = count;
+
+  const playSound = useCallback(() => {
+    if (!soundEnabled) {
+      return;
+    }
+
     const audioContext = new (
-      window.AudioContext || (window as any).webkitAudioContext
+      window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     )();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -52,64 +78,118 @@ export default function Timer() {
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.5);
-  }
+  }, [soundEnabled]);
 
-  function tick() {
+  const setPaused = useCallback(
+    (value: boolean) => {
+      setIsPaused(value);
+      isPausedRef.current = value;
+    },
+    [setIsPaused],
+  );
+
+  const tick = useCallback(() => {
     secondsLeftRef.current--;
     setSecondsLeft(secondsLeftRef.current);
-  }
+  }, [setSecondsLeft]);
 
-  function switchMode() {
-    let nextMode: "focus" | "break" | "longBreak";
-    let nextSeconds: number;
+  const switchMode = useCallback(
+    (reason: "completed" | "skipped" = "completed") => {
+      const templateLabel = useSettingsStore.getState().templateLabel;
+      const currentMode = modeRef.current;
+      const currentCount = countRef.current;
+      const logPayload = {
+        mode: currentMode,
+        templateLabel,
+        sessionCount: currentCount,
+      };
 
-    if (modeRef.current === "focus") {
-      if (count === cycle) {
-        nextMode = "longBreak";
-        nextSeconds = longBreakMinutes * 60;
+      if (reason === "completed") {
+        logCompleted(logPayload);
       } else {
-        nextMode = "break";
-        nextSeconds = breakMinutes * 60;
+        logSkipped(logPayload);
       }
-    } else {
-      nextMode = "focus";
-      nextSeconds = focusMinutes * 60;
 
-      if (modeRef.current === "longBreak") {
-        setCount(1);
+      let nextMode: TimerMode;
+      let nextSeconds: number;
+
+      if (currentMode === "focus") {
+        if (currentCount === cycle) {
+          nextMode = "longBreak";
+          nextSeconds = longBreakMinutes * 60;
+        } else {
+          nextMode = "break";
+          nextSeconds = breakMinutes * 60;
+        }
       } else {
-        setCount(count + 1);
+        nextMode = "focus";
+        nextSeconds = focusMinutes * 60;
+
+        if (currentMode === "longBreak") {
+          setCount(1);
+          countRef.current = 1;
+        } else {
+          const nextCount = currentCount + 1;
+          setCount(nextCount);
+          countRef.current = nextCount;
+        }
       }
-    }
 
-    setMode(nextMode);
-    modeRef.current = nextMode;
+      setMode(nextMode);
+      modeRef.current = nextMode;
 
-    setSecondsLeft(nextSeconds);
-    secondsLeftRef.current = nextSeconds;
+      setSecondsLeft(nextSeconds);
+      secondsLeftRef.current = nextSeconds;
 
-    setPaused(true);
-    isPausedRef.current = true;
+      setPaused(true);
+      playSound();
+    },
+    [
+      breakMinutes,
+      cycle,
+      focusMinutes,
+      logCompleted,
+      logSkipped,
+      longBreakMinutes,
+      playSound,
+      setCount,
+      setMode,
+      setPaused,
+      setSecondsLeft,
+    ],
+  );
 
-    playSound();
-  }
-
-  function setPaused(value: boolean) {
-    setIsPaused(value);
-    isPausedRef.current = value;
-  }
+  const prevDurations = useRef({
+    focusMinutes,
+    breakMinutes,
+    longBreakMinutes,
+  });
 
   useEffect(() => {
-    const newSeconds =
-      mode === "focus"
-        ? focusMinutes * 60
-        : mode === "break"
-          ? breakMinutes * 60
-          : longBreakMinutes * 60;
+    const durationsChanged =
+      prevDurations.current.focusMinutes !== focusMinutes ||
+      prevDurations.current.breakMinutes !== breakMinutes ||
+      prevDurations.current.longBreakMinutes !== longBreakMinutes;
+
+    prevDurations.current = {
+      focusMinutes,
+      breakMinutes,
+      longBreakMinutes,
+    };
+
+    if (!durationsChanged) {
+      return;
+    }
+
+    const newSeconds = getSecondsForMode(modeRef.current, {
+      focusMinutes,
+      breakMinutes,
+      longBreakMinutes,
+    });
 
     secondsLeftRef.current = newSeconds;
     setSecondsLeft(newSeconds);
-  }, [mode, focusMinutes, breakMinutes, longBreakMinutes]);
+  }, [focusMinutes, breakMinutes, longBreakMinutes, setSecondsLeft]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -118,9 +198,7 @@ export default function Timer() {
       }
 
       if (secondsLeftRef.current === 0) {
-        isPausedRef.current = true;
-        setIsPaused(true);
-        switchMode();
+        switchMode("completed");
         return;
       }
 
@@ -128,20 +206,13 @@ export default function Timer() {
     }, 1000);
 
     return () => clearInterval(interval);
-  });
+  }, [switchMode, tick]);
 
-  let totalSeconds: number;
-  switch (mode) {
-    case "focus":
-      totalSeconds = focusMinutes * 60;
-      break;
-    case "break":
-      totalSeconds = breakMinutes * 60;
-      break;
-    case "longBreak":
-      totalSeconds = longBreakMinutes * 60;
-      break;
-  }
+  const totalSeconds = getSecondsForMode(mode, {
+    focusMinutes,
+    breakMinutes,
+    longBreakMinutes,
+  });
 
   const percentage = Math.round((secondsLeft / totalSeconds) * 100);
 
@@ -162,18 +233,27 @@ export default function Timer() {
   function stop() {
     setPaused(true);
 
-    secondsLeftRef.current = focusMinutes * 60;
-    setSecondsLeft(secondsLeftRef.current);
+    const resetSeconds = focusMinutes * 60;
+    secondsLeftRef.current = resetSeconds;
+    setSecondsLeft(resetSeconds);
 
     setMode("focus");
     modeRef.current = "focus";
 
     setCount(1);
+    countRef.current = 1;
   }
 
-  function addTime(minutes: number) {
-    secondsLeftRef.current += minutes * 60;
+  function addTime(minutesToAdd: number) {
+    secondsLeftRef.current += minutesToAdd * 60;
     setSecondsLeft(secondsLeftRef.current);
+
+    logExtended({
+      mode: modeRef.current,
+      templateLabel: useSettingsStore.getState().templateLabel,
+      sessionCount: countRef.current,
+      minutesAdded: minutesToAdd,
+    });
   }
 
   const modeLabel =
@@ -181,19 +261,16 @@ export default function Timer() {
 
   return (
     <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 px-4 py-4 text-slate-100">
-      {/* Template Selector */}
       <div className="w-full max-w-3xl flex justify-center">
         <TemplateLabels />
       </div>
 
-      {/* Session Info */}
       <div className="text-center">
         <p className="font-medium uppercase tracking-[0.24em] text-slate-400 text-[clamp(1rem,2vw,1.25rem)]">
           {modeLabel} • Session {count} of {cycle}
         </p>
       </div>
 
-      {/* Circular Progress Bar */}
       <div className="w-[min(70vw,40vh)] h-[min(70vw,40vh)] max-w-[45vh] max-h-[45vh]">
         <CircularProgressbar
           value={percentage}
@@ -202,7 +279,6 @@ export default function Timer() {
         />
       </div>
 
-      {/* Control Buttons */}
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button
           variant="outline"
@@ -242,7 +318,7 @@ export default function Timer() {
           variant="outline"
           size="xl"
           onClick={() => {
-            switchMode();
+            switchMode("skipped");
             setPaused(false);
           }}
           title="Skip to next session"

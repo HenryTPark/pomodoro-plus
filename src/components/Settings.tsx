@@ -1,7 +1,15 @@
 "use client";
 
 import React from "react";
-import { useUIStore, useSettingsStore } from "@/store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { usePreferencesStore, useSettingsStore } from "@/store";
 import TemplateLabels from "@/components/TemplateLabels";
 import TimeSlider from "@/components/TimeSlider";
 import CycleSlider from "@/components/CycleSlider";
@@ -9,8 +17,10 @@ import AddModal from "@/components/AddModal";
 import EditModal from "@/components/EditModal";
 import DeleteModal from "@/components/DeleteModal";
 
+const cardClassName =
+  "rounded-2xl border border-slate-800 bg-slate-950/70 p-[clamp(0.5rem,1.2vh,0.875rem)] shadow-2xl shadow-slate-950/30 backdrop-blur-xl";
+
 export default function Settings() {
-  const { setShowSettings } = useUIStore();
   const {
     focusMinutes,
     breakMinutes,
@@ -23,6 +33,8 @@ export default function Settings() {
     setLongBreakMinutes,
     setCycle,
   } = useSettingsStore();
+  const { theme, soundEnabled, setTheme, toggleSoundEnabled } =
+    usePreferencesStore();
 
   const handleFocusChange = (value: number) => {
     setFocusMinutes(value);
@@ -61,61 +73,109 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col items-center justify-start gap-2 px-2 py-2 text-slate-100 sm:px-3 lg:px-4">
-      {/* Template Selection */}
-      <div className="w-full max-w-[min(100vw-1rem,72rem)] rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold text-white">Templates</h2>
-              <p className="text-[clamp(0.95rem,1.7vw,1.05rem)] text-slate-400">
+    <div className="flex h-full min-h-0 flex-col items-center overflow-hidden px-2 py-1 text-slate-100 sm:px-3">
+      <div className="flex h-full min-h-0 w-full max-w-[min(100vw-1rem,72rem)] flex-col gap-[clamp(0.25rem,0.6vh,0.5rem)]">
+        <section className={`${cardClassName} shrink-0`}>
+          <div className="flex flex-col gap-[clamp(0.25rem,0.8vh,0.5rem)] sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-[clamp(1rem,2.2vh,1.35rem)] font-semibold text-white">
+                Templates
+              </h2>
+              <p className="truncate text-[clamp(0.7rem,1.4vh,0.85rem)] text-slate-400">
                 Choose or modify your focus presets.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-1.5">
               <EditModal />
               <DeleteModal />
               <AddModal />
             </div>
           </div>
-          <div className="max-h-[calc(100vh-20vh)] overflow-hidden">
-            <TemplateLabels />
+          <TemplateLabels compact />
+        </section>
+
+        <section className={`${cardClassName} flex min-h-0 flex-1 flex-col`}>
+          <div className="shrink-0 space-y-0.5">
+            <h2 className="text-[clamp(1rem,2.2vh,1.35rem)] font-semibold text-white">
+              Timing
+            </h2>
+            <p className="truncate text-[clamp(0.7rem,1.4vh,0.85rem)] text-slate-400">
+              Adjust focus and break lengths for your current template.
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* Sliders */}
-      <div className="w-full max-w-[min(100vw-1rem,72rem)] space-y-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
-        <div className="space-y-2">
-          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold text-white">Timing</h2>
-          <p className="text-[clamp(0.95rem,1.7vw,1.05rem)] text-slate-400">
-            Adjust focus and break lengths for your current template.
-          </p>
-        </div>
+          <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-x-2 sm:grid-cols-2">
+            <TimeSlider
+              label="Focus Minutes"
+              value={focusMinutes}
+              onChange={handleFocusChange}
+              compact
+            />
+            <TimeSlider
+              label="Short Break Minutes"
+              value={breakMinutes}
+              onChange={handleBreakChange}
+              compact
+            />
+            <TimeSlider
+              label="Long Break Minutes"
+              value={longBreakMinutes}
+              onChange={handleLongBreakChange}
+              compact
+            />
+            <CycleSlider
+              label="Focus Sessions per Cycle"
+              value={cycle}
+              onChange={handleCycleChange}
+              compact
+            />
+          </div>
+        </section>
 
-        <TimeSlider
-          label="Focus Minutes"
-          value={focusMinutes}
-          onChange={handleFocusChange}
-        />
+        <section className={`${cardClassName} shrink-0`}>
+          <div className="grid gap-[clamp(0.5rem,1vh,0.75rem)] sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+            <div className="space-y-1">
+              <h2 className="text-[clamp(1rem,2.2vh,1.35rem)] font-semibold text-white">
+                Preferences
+              </h2>
+              <p className="truncate text-[clamp(0.7rem,1.4vh,0.85rem)] text-slate-400">
+                Saved to this browser.
+              </p>
+            </div>
 
-        <TimeSlider
-          label="Short Break Minutes"
-          value={breakMinutes}
-          onChange={handleBreakChange}
-        />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <p className="text-[clamp(0.65rem,1.2vh,0.75rem)] font-medium text-slate-300">
+                  Theme
+                </p>
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger className="w-full cursor-pointer" size="sm">
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <TimeSlider
-          label="Long Break Minutes"
-          value={longBreakMinutes}
-          onChange={handleLongBreakChange}
-        />
-
-        <CycleSlider
-          label="Focus Sessions per Cycle"
-          value={cycle}
-          onChange={handleCycleChange}
-        />
+              <div className="space-y-1">
+                <p className="text-[clamp(0.65rem,1.2vh,0.75rem)] font-medium text-slate-300">
+                  Session sound
+                </p>
+                <Button
+                  variant={soundEnabled ? "default" : "outline"}
+                  size="sm"
+                  className="w-full cursor-pointer"
+                  onClick={toggleSoundEnabled}
+                >
+                  {soundEnabled ? "Sound on" : "Sound off"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
