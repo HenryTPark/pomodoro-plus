@@ -104,7 +104,7 @@ export default function Settings() {
             </p>
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-1 content-center gap-x-6 gap-y-[clamp(0.5rem,1.5vh,1.25rem)] sm:grid-cols-2">
+          <div className="grid min-h-0 flex-1 grid-cols-1 content-center gap-y-[clamp(0.5rem,1.5vh,1.25rem)]">
             <TimeSlider
               label="Focus Minutes"
               value={focusMinutes}
