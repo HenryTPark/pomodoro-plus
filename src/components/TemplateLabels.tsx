@@ -31,15 +31,15 @@ export default function TemplateLabels({ compact = false }: TemplateLabelsProps)
   };
 
   return (
-    <div className={`w-full max-w-full ${compact ? "py-0" : "py-2"}`}>
+    <div className={`w-full max-w-full ${compact ? "pt-[clamp(0.5rem,1.2vh,0.875rem)]" : "py-2"}`}>
       <Select
         className="w-full"
         value={templateLabel}
         onValueChange={handleChange}
       >
         <SelectTrigger
-          className={`w-full cursor-pointer ${compact ? "text-sm" : "p-4 text-xl"}`}
-          size={compact ? "sm" : "lg"}
+          className={`w-full cursor-pointer ${compact ? "text-[clamp(0.9rem,1.8vh,1.1rem)]" : "p-4 text-xl"}`}
+          size={compact ? "default" : "lg"}
         >
           <SelectValue placeholder="Select a template" />
         </SelectTrigger>

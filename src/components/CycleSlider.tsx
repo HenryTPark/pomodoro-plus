@@ -24,15 +24,15 @@ export default function CycleSlider({
   compact = false,
 }: CycleSliderProps) {
   return (
-    <div className={`w-full ${compact ? "px-1 py-0.5" : "px-3 py-2"}`}>
+    <div className={`w-full ${compact ? "px-1.5 py-[clamp(0.25rem,0.8vh,0.625rem)]" : "px-3 py-2"}`}>
       <div className="flex items-center justify-between gap-2">
         <Label
-          className={`font-medium text-slate-400 ${compact ? "text-xs" : "text-base"}`}
+          className={`font-medium text-slate-400 ${compact ? "text-[clamp(0.85rem,1.7vh,1.05rem)]" : "text-base"}`}
         >
           {label}
         </Label>
         <span
-          className={`min-w-fit font-semibold text-slate-400 ${compact ? "text-xs" : "text-base"}`}
+          className={`min-w-fit font-semibold text-slate-400 ${compact ? "text-[clamp(0.85rem,1.7vh,1.05rem)]" : "text-base"}`}
         >
           {value}
         </span>
@@ -44,7 +44,7 @@ export default function CycleSlider({
         min={min}
         max={max}
         step={step}
-        className={compact ? "mt-1" : "mt-2"}
+        className={compact ? "mt-[clamp(0.375rem,1vh,0.75rem)]" : "mt-2"}
       />
     </div>
   );

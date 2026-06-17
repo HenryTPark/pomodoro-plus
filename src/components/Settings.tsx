@@ -18,7 +18,7 @@ import EditModal from "@/components/EditModal";
 import DeleteModal from "@/components/DeleteModal";
 
 const cardClassName =
-  "rounded-2xl border border-slate-800 bg-slate-950/70 p-[clamp(0.5rem,1.2vh,0.875rem)] shadow-2xl shadow-slate-950/30 backdrop-blur-xl";
+  "rounded-2xl border border-slate-800 bg-slate-950/70 p-[clamp(0.875rem,2.2vh,1.5rem)] shadow-2xl shadow-slate-950/30 backdrop-blur-xl";
 
 export default function Settings() {
   const {
@@ -73,15 +73,15 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col items-center overflow-hidden px-2 py-1 text-slate-100 sm:px-3">
-      <div className="flex h-full min-h-0 w-full max-w-[min(100vw-1rem,72rem)] flex-col gap-[clamp(0.25rem,0.6vh,0.5rem)]">
+    <div className="flex h-full min-h-0 flex-col items-center overflow-hidden px-2 py-3 text-slate-100 sm:px-3">
+      <div className="flex h-full min-h-0 w-full max-w-[min(100vw-1rem,72rem)] flex-col gap-[clamp(0.625rem,1.6vh,1.125rem)]">
         <section className={`${cardClassName} shrink-0`}>
-          <div className="flex flex-col gap-[clamp(0.25rem,0.8vh,0.5rem)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-[clamp(0.5rem,1.2vh,0.875rem)] sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-[clamp(1rem,2.2vh,1.35rem)] font-semibold text-white">
+              <h2 className="text-[clamp(1.25rem,3vh,1.75rem)] font-semibold text-white">
                 Templates
               </h2>
-              <p className="truncate text-[clamp(0.7rem,1.4vh,0.85rem)] text-slate-400">
+              <p className="truncate text-[clamp(0.85rem,1.8vh,1.05rem)] text-slate-400">
                 Choose or modify your focus presets.
               </p>
             </div>
@@ -95,16 +95,16 @@ export default function Settings() {
         </section>
 
         <section className={`${cardClassName} flex min-h-0 flex-1 flex-col`}>
-          <div className="shrink-0 space-y-0.5">
-            <h2 className="text-[clamp(1rem,2.2vh,1.35rem)] font-semibold text-white">
+          <div className="shrink-0 space-y-1">
+            <h2 className="text-[clamp(1.25rem,3vh,1.75rem)] font-semibold text-white">
               Timing
             </h2>
-            <p className="truncate text-[clamp(0.7rem,1.4vh,0.85rem)] text-slate-400">
+            <p className="truncate text-[clamp(0.85rem,1.8vh,1.05rem)] text-slate-400">
               Adjust focus and break lengths for your current template.
             </p>
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-x-2 sm:grid-cols-2">
+          <div className="grid min-h-0 flex-1 grid-cols-1 content-center gap-x-6 gap-y-[clamp(0.5rem,1.5vh,1.25rem)] sm:grid-cols-2">
             <TimeSlider
               label="Focus Minutes"
               value={focusMinutes}
@@ -135,17 +135,17 @@ export default function Settings() {
         <section className={`${cardClassName} shrink-0`}>
           <div className="grid gap-[clamp(0.5rem,1vh,0.75rem)] sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
             <div className="space-y-1">
-              <h2 className="text-[clamp(1rem,2.2vh,1.35rem)] font-semibold text-white">
+              <h2 className="text-[clamp(1.25rem,3vh,1.75rem)] font-semibold text-white">
                 Preferences
               </h2>
-              <p className="truncate text-[clamp(0.7rem,1.4vh,0.85rem)] text-slate-400">
+              <p className="truncate text-[clamp(0.85rem,1.8vh,1.05rem)] text-slate-400">
                 Saved to this browser.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <p className="text-[clamp(0.65rem,1.2vh,0.75rem)] font-medium text-slate-300">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <p className="text-[clamp(0.8rem,1.6vh,0.95rem)] font-medium text-slate-300">
                   Theme
                 </p>
                 <Select value={theme} onValueChange={setTheme}>
@@ -160,8 +160,8 @@ export default function Settings() {
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <p className="text-[clamp(0.65rem,1.2vh,0.75rem)] font-medium text-slate-300">
+              <div className="space-y-1.5">
+                <p className="text-[clamp(0.8rem,1.6vh,0.95rem)] font-medium text-slate-300">
                   Session sound
                 </p>
                 <Button
