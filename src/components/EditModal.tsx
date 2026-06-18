@@ -118,7 +118,7 @@ export default function EditModal() {
           <Button
             onClick={handleEdit}
             size="2xl"
-            className="cursor-pointer hover:bg-stone-100"
+            className="cursor-pointer hover:bg-primary/80"
           >
             Save Changes
           </Button>

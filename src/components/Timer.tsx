@@ -15,10 +15,6 @@ import {
 } from "@/store";
 import TemplateLabels from "@/components/TemplateLabels";
 
-const red = "#f44336";
-const green = "#43a047";
-const blue = "#6f74dd";
-
 export default function Timer() {
   const {
     focusMinutes,
@@ -224,9 +220,14 @@ export default function Timer() {
     strokeLinecap: "butt",
     textSize: "24px",
     pathTransitionDuration: 0.5,
-    pathColor: mode === "focus" ? red : mode === "break" ? green : blue,
-    textColor: "#fff",
-    trailColor: "rgba(255, 255, 255, .2)",
+    pathColor:
+      mode === "focus"
+        ? "var(--timer-focus)"
+        : mode === "break"
+          ? "var(--timer-break)"
+          : "var(--timer-long-break)",
+    textColor: "var(--foreground)",
+    trailColor: "var(--timer-track)",
     backgroundColor: "#3e98c7",
   });
 
@@ -260,13 +261,13 @@ export default function Timer() {
     mode === "focus" ? "Focus" : mode === "break" ? "Break" : "Long Break";
 
   return (
-    <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 px-4 py-4 text-slate-100">
+    <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 px-4 py-4 text-foreground">
       <div className="w-full max-w-3xl flex justify-center">
         <TemplateLabels />
       </div>
 
       <div className="text-center">
-        <p className="font-medium uppercase tracking-[0.24em] text-slate-400 text-[clamp(1rem,2vw,1.25rem)]">
+        <p className="font-medium uppercase tracking-[0.24em] text-muted-foreground text-[clamp(1rem,2vw,1.25rem)]">
           {modeLabel} • Session {count} of {cycle}
         </p>
       </div>

@@ -138,7 +138,7 @@ export default function AddModal() {
           </Button>
           <Button
             onClick={handleAdd}
-            className="cursor-pointer hover:bg-stone-100"
+            className="cursor-pointer hover:bg-primary/80"
             size="2xl"
           >
             Save Template
