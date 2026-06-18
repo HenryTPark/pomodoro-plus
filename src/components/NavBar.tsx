@@ -6,14 +6,17 @@ import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 
 export default function NavBar() {
-  const { showSettings, toggleShowSettings } = useUIStore();
+  const { showSettings, toggleShowSettings, setShowSettings } = useUIStore();
 
   return (
     <nav className="border-b border-slate-800 bg-slate-950/95 shadow-xl shadow-slate-950/20 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
         <div className="flex min-h-[9vh] items-center justify-between">
           <div className="shrink-0">
-            <h1 className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-slate-50 cursor-pointer">
+            <h1
+              onClick={() => setShowSettings(false)}
+              className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-slate-50 cursor-pointer"
+            >
               Pomodoro+
             </h1>
           </div>
