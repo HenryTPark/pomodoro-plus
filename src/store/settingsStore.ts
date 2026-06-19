@@ -36,17 +36,35 @@ interface SettingsState {
 }
 
 export const defaultTemplates: Templates = {
-  Default: {
+  Classic: {
     focus: 25,
     shortBreak: 5,
     longBreak: 15,
     cycle: 4,
   },
-  Test: {
-    focus: 50,
-    shortBreak: 10,
+  'Deep Work': {
+    focus: 52,
+    shortBreak: 17,
     longBreak: 30,
     cycle: 2,
+  },
+  Ultradian: {
+    focus: 90,
+    shortBreak: 20,
+    longBreak: 30,
+    cycle: 2,
+  },
+  'Quick Sprints': {
+    focus: 15,
+    shortBreak: 3,
+    longBreak: 10,
+    cycle: 4,
+  },
+  Animedoro: {
+    focus: 40,
+    shortBreak: 20,
+    longBreak: 30,
+    cycle: 3,
   },
 };
 
@@ -69,7 +87,7 @@ function normalizeSettings(persisted: Partial<PersistedSettings>): PersistedSett
   const templateLabel =
     persisted.templateLabel && templates[persisted.templateLabel]
       ? persisted.templateLabel
-      : 'Default';
+      : 'Classic';
 
   const activeTemplate = templates[templateLabel];
 
@@ -91,7 +109,7 @@ export const useSettingsStore = create<SettingsState>()(
       longBreakMinutes: 15,
       cycle: 4,
       templates: defaultTemplates,
-      templateLabel: 'Default',
+      templateLabel: 'Classic',
 
       setFocusMinutes: (minutes) => set({ focusMinutes: minutes }),
       setBreakMinutes: (minutes) => set({ breakMinutes: minutes }),

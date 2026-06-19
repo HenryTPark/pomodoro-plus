@@ -25,8 +25,8 @@ export default function DeleteModal() {
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && templateLabel === "Default") {
-      alert("You cannot delete the Default Template");
+    if (isOpen && templateLabel === "Classic") {
+      alert("You cannot delete the Classic Template");
       return;
     }
     setOpen(isOpen);
@@ -35,10 +35,10 @@ export default function DeleteModal() {
   function handleDelete() {
     deleteTemplate(templateLabel);
 
-    // Switch to Default template
-    const defaultTemplate = templates["Default"];
+    // Switch to Classic template
+    const defaultTemplate = templates["Classic"];
     changeTemplate(defaultTemplate);
-    setTemplateLabel("Default");
+    setTemplateLabel("Classic");
 
     setOpen(false);
   }

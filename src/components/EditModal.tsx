@@ -28,8 +28,8 @@ export default function EditModal() {
   const [newName, setNewName] = useState("");
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && templateLabel === "Default") {
-      alert("You cannot edit the Default Template");
+    if (isOpen && templateLabel === "Classic") {
+      alert("You cannot edit the Classic Template");
       return;
     }
     setNewName("");
