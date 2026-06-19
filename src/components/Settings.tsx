@@ -18,7 +18,7 @@ import EditModal from "@/components/EditModal";
 import DeleteModal from "@/components/DeleteModal";
 
 const cardClassName =
-  "rounded-2xl border border-border bg-card/70 p-[clamp(0.875rem,2.2vh,1.5rem)] shadow-2xl shadow-slate-950/30 backdrop-blur-xl";
+  "rounded-2xl border border-border bg-card/70 p-[clamp(0.875rem,2.2vh,1.5rem)] dark:shadow-2xl dark:shadow-slate-950/30 backdrop-blur-xl";
 
 export default function Settings() {
   const {
