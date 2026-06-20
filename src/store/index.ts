@@ -9,7 +9,7 @@ export {
   getSecondsForMode,
   type TimerMode,
 } from './timerStore';
-export { useUIStore } from './uiStore';
+export { useUIStore, type AppView } from './uiStore';
 export {
   usePreferencesStore,
   type ThemePreference,

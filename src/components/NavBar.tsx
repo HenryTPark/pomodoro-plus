@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { Settings, Timer } from "lucide-react";
+import { History, Settings, Timer } from "lucide-react";
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 
 export default function NavBar() {
-  const { showSettings, toggleShowSettings, setShowSettings } = useUIStore();
+  const { view, setView, toggleView } = useUIStore();
 
   return (
     <nav className="border-b border-border bg-card/95 dark:shadow-xl dark:shadow-slate-950/20 backdrop-blur-xl">
@@ -14,7 +14,7 @@ export default function NavBar() {
         <div className="flex h-[var(--nav-height)] items-center justify-between">
           <div className="shrink-0">
             <h1
-              onClick={() => setShowSettings(false)}
+              onClick={() => setView("timer")}
               className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-foreground cursor-pointer"
             >
               Pomodoro+
@@ -25,12 +25,28 @@ export default function NavBar() {
             <Button
               variant="secondary"
               size="xl"
-              onClick={toggleShowSettings}
-              title={showSettings ? "Back to Timer" : "Settings"}
+              onClick={() => toggleView("history")}
+              title={view === "history" ? "Back to Timer" : "History"}
               className="cursor-pointer"
             >
               <div className="flex justify-around items-center">
-                {showSettings ? (
+                {view === "history" ? (
+                  <Timer className="size-7" />
+                ) : (
+                  <History className="size-7" />
+                )}
+              </div>
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="xl"
+              onClick={() => toggleView("settings")}
+              title={view === "settings" ? "Back to Timer" : "Settings"}
+              className="cursor-pointer"
+            >
+              <div className="flex justify-around items-center">
+                {view === "settings" ? (
                   <Timer className="size-7" />
                 ) : (
                   <Settings className="size-7" />

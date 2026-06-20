@@ -1,19 +1,22 @@
 import { create } from 'zustand';
 
+export type AppView = 'timer' | 'settings' | 'history';
+
 interface UIState {
   // UI state
-  showSettings: boolean;
+  view: AppView;
 
   // Actions
-  setShowSettings: (show: boolean) => void;
-  toggleShowSettings: () => void;
+  setView: (view: AppView) => void;
+  toggleView: (view: Exclude<AppView, 'timer'>) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   // Initial state
-  showSettings: false,
+  view: 'timer',
 
   // Actions
-  setShowSettings: (show) => set({ showSettings: show }),
-  toggleShowSettings: () => set((state) => ({ showSettings: !state.showSettings })),
+  setView: (view) => set({ view }),
+  toggleView: (view) =>
+    set((state) => ({ view: state.view === view ? 'timer' : view })),
 }));
