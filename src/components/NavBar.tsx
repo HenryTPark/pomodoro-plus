@@ -11,7 +11,7 @@ export default function NavBar() {
   return (
     <nav className="border-b border-border bg-card/95 dark:shadow-xl dark:shadow-slate-950/20 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
-        <div className="flex min-h-[9vh] items-center justify-between">
+        <div className="flex h-[var(--nav-height)] items-center justify-between">
           <div className="shrink-0">
             <h1
               onClick={() => setShowSettings(false)}

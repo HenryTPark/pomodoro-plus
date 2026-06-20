@@ -55,6 +55,7 @@
 
 :root
 {
+  --nav-height: 9vh;
   --background: oklch(0.992 0.003 257);
   --foreground: oklch(0.21 0.02 259);
   --card: oklch(1 0.002 257);

@@ -33,8 +33,9 @@ export default function RootLayout({
       <body className="flex min-h-screen min-w-full flex-col bg-background text-foreground overflow-hidden">
         <Providers>
           <NavBar />
-          {/* <main className="flex flex-col justify-center items-center m-auto"> */}
-          <main className="flex-1 min-h-0">{children}</main>
+          <main className="h-[calc(100vh-var(--nav-height))] min-h-0 overflow-hidden">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>
