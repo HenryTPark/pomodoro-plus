@@ -9,18 +9,20 @@ interface TimerState {
   mode: TimerMode;
   secondsLeft: number;
   count: number;
+  elapsedSeconds: number;
 
   setIsPaused: (isPaused: boolean) => void;
   setMode: (mode: TimerMode) => void;
   setSecondsLeft: (seconds: number) => void;
   setCount: (count: number) => void;
+  setElapsedSeconds: (seconds: number) => void;
   decrementSeconds: () => void;
   resetTimer: (seconds: number, mode?: TimerMode) => void;
 }
 
 type PersistedTimerState = Pick<
   TimerState,
-  'isPaused' | 'mode' | 'secondsLeft' | 'count'
+  'isPaused' | 'mode' | 'secondsLeft' | 'count' | 'elapsedSeconds'
 >;
 
 export const useTimerStore = create<TimerState>()(
@@ -30,11 +32,13 @@ export const useTimerStore = create<TimerState>()(
       mode: 'focus',
       secondsLeft: 25 * 60,
       count: 1,
+      elapsedSeconds: 0,
 
       setIsPaused: (isPaused) => set({ isPaused }),
       setMode: (mode) => set({ mode }),
       setSecondsLeft: (seconds) => set({ secondsLeft: seconds }),
       setCount: (count) => set({ count }),
+      setElapsedSeconds: (seconds) => set({ elapsedSeconds: seconds }),
 
       decrementSeconds: () =>
         set((state) => ({
@@ -47,6 +51,7 @@ export const useTimerStore = create<TimerState>()(
           mode,
           isPaused: true,
           count: 1,
+          elapsedSeconds: 0,
         }),
     }),
     {
@@ -57,6 +62,7 @@ export const useTimerStore = create<TimerState>()(
         mode: state.mode,
         secondsLeft: state.secondsLeft,
         count: state.count,
+        elapsedSeconds: state.elapsedSeconds,
       }),
       ...persistOptions,
     },
