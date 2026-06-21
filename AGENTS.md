@@ -8,6 +8,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 For EVERY change, regardless of size, follow this workflow:
 
+> Do NOT trust the session's `Is directory a git repo` environment metadata — it is a point-in-time snapshot and is sometimes wrong or stale. Always confirm git state yourself before deciding whether this workflow applies, e.g. `git rev-parse --is-inside-work-tree`. If that prints `true`, this workflow is mandatory regardless of what the metadata said.
+
 1. Decide new work vs. revision:
    - New work (on `master`, or a fresh feature/fix request): create a new branch.
    - Revision (already on a feature branch whose PR is being iterated on): stay on that branch.
