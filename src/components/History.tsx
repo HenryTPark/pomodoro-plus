@@ -93,7 +93,7 @@ export default function History() {
               </p>
             </div>
           ) : (
-            <ul className="mt-[clamp(0.5rem,1.5vh,1rem)] min-h-0 flex-1 divide-y divide-border overflow-y-auto">
+            <ul className="mt-[clamp(0.5rem,1.5vh,1rem)] min-h-0 flex-1 divide-y divide-border overflow-y-auto pr-2 sm:pr-3">
               {entries.map((entry) => {
                 const event = eventStyles[entry.type];
                 return (
