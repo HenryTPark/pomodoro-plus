@@ -11,7 +11,15 @@ For EVERY change, regardless of size, follow this workflow:
 1. Decide new work vs. revision:
    - New work (on `master`, or a fresh feature/fix request): create a new branch.
    - Revision (already on a feature branch whose PR is being iterated on): stay on that branch.
-2. New branch: `git fetch origin` then `git checkout -b <type>/<short-kebab-desc> origin/master` so it cuts from the latest `master`.
+2. New branch: first sync and prune, then cut from the latest `master`:
+   ```bash
+   git checkout master
+   git fetch --prune origin
+   git pull --ff-only origin master
+   git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -d
+   git checkout -b <type>/<short-kebab-desc>
+   ```
+   (The remote has `delete_branch_on_merge` enabled, so merged branches show as `gone` after fetch and are pruned locally here.)
 3. Branch/commit `<type>` is one of: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`, `style` (Conventional Commits).
 4. Make the changes.
 5. Commit with a Conventional Commit message: `<type>: <summary>`.
