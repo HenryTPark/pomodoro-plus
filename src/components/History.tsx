@@ -11,6 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import HistoryDashboard, {
+  getRangeCutoff,
+  rangeOptions,
+  type RangeFilter,
+} from "@/components/HistoryDashboard";
 
 const cardClassName =
   "rounded-2xl border border-border bg-card/70 dark:shadow-2xl dark:shadow-slate-950/30 backdrop-blur-xl";
@@ -19,7 +24,6 @@ type HistoryEventType = "completed" | "skipped" | "extended";
 
 type EventTypeFilter = "all" | HistoryEventType;
 type ModeFilter = "all" | TimerMode;
-type RangeFilter = "all" | "today" | "7d" | "30d";
 
 interface HistoryEntry {
   id: string;
@@ -41,32 +45,6 @@ const eventStyles: Record<HistoryEventType, { label: string; className: string }
   skipped: { label: "Skipped", className: "text-muted-foreground" },
   extended: { label: "Extended", className: "text-timer-long-break" },
 };
-
-const rangeOptions: { value: RangeFilter; label: string }[] = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "7d" },
-  { value: "30d", label: "30d" },
-  { value: "all", label: "All" },
-];
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function getRangeCutoff(range: RangeFilter): number {
-  switch (range) {
-    case "today": {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      return start.getTime();
-    }
-    case "7d":
-      return Date.now() - 7 * DAY_MS;
-    case "30d":
-      return Date.now() - 30 * DAY_MS;
-    case "all":
-    default:
-      return 0;
-  }
-}
 
 function formatTimestamp(timestamp: number) {
   return new Date(timestamp).toLocaleString(undefined, {
@@ -238,6 +216,12 @@ export default function History() {
                   </Button>
                 ))}
               </div>
+            </div>
+          ) : null}
+
+          {hasHistory ? (
+            <div className="mt-[clamp(0.5rem,1.5vh,1rem)]">
+              <HistoryDashboard range={range} />
             </div>
           ) : null}
 
