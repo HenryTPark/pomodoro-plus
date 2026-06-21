@@ -24,7 +24,10 @@ For EVERY change, regardless of size, follow this workflow:
    (The remote has `delete_branch_on_merge` enabled, so merged branches show as `gone` after fetch and are pruned locally here.)
 3. Branch/commit `<type>` is one of: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`, `style` (Conventional Commits).
 4. Make the changes.
-5. Commit with a Conventional Commit message: `<type>: <summary>`.
-6. Push: first push uses `git push -u origin HEAD`.
-7. New work: open a PR with `gh pr create` targeting `master`.
-   Revision: just push to the existing branch — the open PR updates automatically. Do NOT open a second PR.
+5. Commit each logical chunk as a small Conventional Commit (`<type>: <summary>`). A feature built across several steps should land as several small commits on the same branch, keeping each one easy to review.
+6. Push when you commit (first push uses `git push -u origin HEAD`) so work is backed up and reviewable on the branch.
+7. Pull requests are opt-in: NEVER open a PR unless the user explicitly asks (e.g. "make a PR"). Finishing the work is NOT a trigger to open one — keep committing/pushing to the branch and wait.
+8. When the user asks for a PR:
+   - Make sure all intended commits are pushed to the current feature branch. Do NOT re-branch from `master` if the branch already has commits — the branch was already cut from `master` at step 2.
+   - Open it with `gh pr create` targeting `master`, using a sensible title and a description with a summary and a test plan.
+   - Revision of an existing PR: just push to the branch — the open PR updates automatically. Do NOT open a second PR.
