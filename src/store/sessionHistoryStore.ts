@@ -10,6 +10,7 @@ export interface CompletedSession {
   mode: TimerMode;
   templateLabel: string;
   sessionCount: number;
+  durationSeconds: number;
   timestamp: number;
 }
 
@@ -18,6 +19,7 @@ export interface SkippedSession {
   mode: TimerMode;
   templateLabel: string;
   sessionCount: number;
+  durationSeconds: number;
   timestamp: number;
 }
 

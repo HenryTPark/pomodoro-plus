@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import {
-  useSessionHistoryStore,
-  useSettingsStore,
-  type TimerMode,
-} from "@/store";
+import { useSessionHistoryStore, type TimerMode } from "@/store";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -70,7 +66,7 @@ function currentDayStart(): number {
 }
 
 function formatMinutes(totalMinutes: number): string {
-  const rounded = Math.round(totalMinutes);
+  const rounded = Number.isFinite(totalMinutes) ? Math.round(totalMinutes) : 0;
   if (rounded <= 0) return "0m";
   const hours = Math.floor(rounded / 60);
   const minutes = rounded % 60;
@@ -90,31 +86,12 @@ interface TimedContribution {
 }
 
 export default function HistoryDashboard({ range }: HistoryDashboardProps) {
-  const { completedSessions, skippedSessions, extendedSessions } =
-    useSessionHistoryStore();
-  const { templates, focusMinutes, breakMinutes, longBreakMinutes } =
-    useSettingsStore();
+  const { completedSessions, skippedSessions } = useSessionHistoryStore();
 
-  const estMinutes = useMemo(() => {
-    const fallback: Record<TimerMode, number> = {
-      focus: focusMinutes,
-      break: breakMinutes,
-      longBreak: longBreakMinutes,
-    };
-    return (mode: TimerMode, templateLabel: string): number => {
-      const template = templates[templateLabel];
-      if (template) {
-        if (mode === "focus") return template.focus;
-        if (mode === "break") return template.shortBreak;
-        return template.longBreak;
-      }
-      return fallback[mode];
-    };
-  }, [templates, focusMinutes, breakMinutes, longBreakMinutes]);
-
-  // Estimated time contributions, grouped per category. Completed sessions
-  // contribute their template duration; extended sessions contribute the
-  // explicitly added minutes. Skipped sessions contribute no time.
+  // Real time contributions, grouped per category. Completed and skipped
+  // sessions contribute their actual active (unpaused) duration. Extended
+  // sessions are excluded because their time is already counted within the
+  // session's recorded duration.
   const contributions = useMemo<TimedContribution[]>(() => {
     const cutoff = getRangeCutoff(range);
     const items: TimedContribution[] = [];
@@ -124,21 +101,21 @@ export default function HistoryDashboard({ range }: HistoryDashboardProps) {
       items.push({
         timestamp: session.timestamp,
         mode: session.mode,
-        minutes: estMinutes(session.mode, session.templateLabel),
+        minutes: session.durationSeconds / 60,
       });
     }
 
-    for (const session of extendedSessions) {
+    for (const session of skippedSessions) {
       if (session.timestamp < cutoff) continue;
       items.push({
         timestamp: session.timestamp,
         mode: session.mode,
-        minutes: session.minutesAdded,
+        minutes: session.durationSeconds / 60,
       });
     }
 
     return items;
-  }, [completedSessions, extendedSessions, estMinutes, range]);
+  }, [completedSessions, skippedSessions, range]);
 
   const categoryMinutes = useMemo(() => {
     const totals: Record<TimerMode, number> = {
@@ -219,7 +196,6 @@ export default function HistoryDashboard({ range }: HistoryDashboardProps) {
           <StatCard
             label="Focus time"
             value={formatMinutes(stats.focusMinutes)}
-            hint="est."
           />
           <StatCard
             label="Day streak"
@@ -298,7 +274,7 @@ function ActivityHistogram({ buckets }: { buckets: HistogramBucket[] }) {
           Focus activity
         </h3>
         <span className="text-[clamp(0.65rem,1.3vh,0.78rem)] text-muted-foreground">
-          est. minutes
+          minutes
         </span>
       </div>
 
@@ -390,7 +366,7 @@ function CategoryDonut({
               className="h-[clamp(5rem,13vh,7.5rem)] w-[clamp(5rem,13vh,7.5rem)] -rotate-90"
               viewBox="0 0 100 100"
               role="img"
-              aria-label="Estimated time split by mode"
+              aria-label="Time split by mode"
             >
               <circle
                 cx="50"
