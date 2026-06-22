@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django
+*.log
+db.sqlite3
+staticfiles/
+
+# Env (root .gitignore ignores .env*; keep the example committed)
+.env
+!.env.example
