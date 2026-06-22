@@ -28,10 +28,12 @@ export default function Timer() {
     mode,
     secondsLeft,
     count,
+    elapsedSeconds,
     setIsPaused,
     setMode,
     setSecondsLeft,
     setCount,
+    setElapsedSeconds,
   } = useTimerStore();
 
   const soundEnabled = usePreferencesStore((state) => state.soundEnabled);
@@ -43,11 +45,13 @@ export default function Timer() {
   const isPausedRef = useRef(isPaused);
   const modeRef = useRef(mode);
   const countRef = useRef(count);
+  const elapsedRef = useRef(elapsedSeconds);
 
   secondsLeftRef.current = secondsLeft;
   isPausedRef.current = isPaused;
   modeRef.current = mode;
   countRef.current = count;
+  elapsedRef.current = elapsedSeconds;
 
   const playSound = useCallback(() => {
     if (!soundEnabled) {
@@ -87,7 +91,10 @@ export default function Timer() {
   const tick = useCallback(() => {
     secondsLeftRef.current--;
     setSecondsLeft(secondsLeftRef.current);
-  }, [setSecondsLeft]);
+
+    elapsedRef.current++;
+    setElapsedSeconds(elapsedRef.current);
+  }, [setSecondsLeft, setElapsedSeconds]);
 
   const switchMode = useCallback(
     (reason: "completed" | "skipped" = "completed") => {
@@ -98,6 +105,7 @@ export default function Timer() {
         mode: currentMode,
         templateLabel,
         sessionCount: currentCount,
+        durationSeconds: elapsedRef.current,
       };
 
       if (reason === "completed") {
@@ -105,6 +113,9 @@ export default function Timer() {
       } else {
         logSkipped(logPayload);
       }
+
+      elapsedRef.current = 0;
+      setElapsedSeconds(0);
 
       let nextMode: TimerMode;
       let nextSeconds: number;
@@ -149,6 +160,7 @@ export default function Timer() {
       longBreakMinutes,
       playSound,
       setCount,
+      setElapsedSeconds,
       setMode,
       setPaused,
       setSecondsLeft,
@@ -185,7 +197,10 @@ export default function Timer() {
 
     secondsLeftRef.current = newSeconds;
     setSecondsLeft(newSeconds);
-  }, [focusMinutes, breakMinutes, longBreakMinutes, setSecondsLeft]);
+
+    elapsedRef.current = 0;
+    setElapsedSeconds(0);
+  }, [focusMinutes, breakMinutes, longBreakMinutes, setSecondsLeft, setElapsedSeconds]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -243,6 +258,9 @@ export default function Timer() {
 
     setCount(1);
     countRef.current = 1;
+
+    elapsedRef.current = 0;
+    setElapsedSeconds(0);
   }
 
   function addTime(minutesToAdd: number) {
