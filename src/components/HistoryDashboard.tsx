@@ -66,7 +66,7 @@ function currentDayStart(): number {
 }
 
 function formatMinutes(totalMinutes: number): string {
-  const rounded = Math.round(totalMinutes);
+  const rounded = Number.isFinite(totalMinutes) ? Math.round(totalMinutes) : 0;
   if (rounded <= 0) return "0m";
   const hours = Math.floor(rounded / 60);
   const minutes = rounded % 60;
