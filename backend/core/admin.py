@@ -1,3 +1,16 @@
-from django.contrib import admin  # noqa: F401
+from django.contrib import admin
 
-# Admin registrations are added alongside the models in a later phase.
+from core.models import Template, UserProfile
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "active_template_label", "theme", "sound_enabled")
+    search_fields = ("user__email", "user__username")
+
+
+@admin.register(Template)
+class TemplateAdmin(admin.ModelAdmin):
+    list_display = ("label", "user", "focus", "short_break", "long_break", "cycle", "is_builtin")
+    list_filter = ("is_builtin",)
+    search_fields = ("label", "user__email", "user__username")

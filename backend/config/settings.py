@@ -47,9 +47,9 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Third-party
     "rest_framework",
-    "rest_framework.authtoken",
     "corsheaders",
     "dj_rest_auth",
+    "dj_rest_auth.registration",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -148,10 +148,41 @@ REST_FRAMEWORK = {
     ],
 }
 
-# dj-rest-auth: use session cookie auth (not JWT) per the plan.
+# dj-rest-auth: session cookie auth (not JWT) per the plan.
 REST_AUTH = {
     "USE_JWT": False,
     "SESSION_LOGIN": True,
+    "TOKEN_MODEL": None,
+    "USER_DETAILS_SERIALIZER": "core.serializers.UserSerializer",
+}
+
+
+# --- django-allauth --------------------------------------------------------
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+GOOGLE_OAUTH_CALLBACK_URL = os.getenv(
+    "GOOGLE_OAUTH_CALLBACK_URL",
+    "http://localhost:3000/auth/callback/google",
+)
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": GOOGLE_OAUTH_CLIENT_ID,
+            "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
 }
 
 
