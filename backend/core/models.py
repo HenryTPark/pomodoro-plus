@@ -54,3 +54,41 @@ class Template(models.Model):
 
     def __str__(self) -> str:
         return f"{self.label} ({self.user})"
+
+
+class SessionEvent(models.Model):
+    class EventType(models.TextChoices):
+        COMPLETED = "completed", "Completed"
+        SKIPPED = "skipped", "Skipped"
+        EXTENDED = "extended", "Extended"
+
+    class Mode(models.TextChoices):
+        FOCUS = "focus", "Focus"
+        BREAK = "break", "Break"
+        LONG_BREAK = "longBreak", "Long Break"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="session_events",
+    )
+    event_type = models.CharField(max_length=10, choices=EventType.choices)
+    mode = models.CharField(max_length=10, choices=Mode.choices)
+    template_label = models.CharField(max_length=100)
+    session_count = models.PositiveSmallIntegerField()
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True)
+    minutes_added = models.PositiveSmallIntegerField(null=True, blank=True)
+    client_id = models.CharField(max_length=100)
+    occurred_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "client_id"],
+                name="unique_session_client_id_per_user",
+            ),
+        ]
+        ordering = ["-occurred_at"]
+
+    def __str__(self) -> str:
+        return f"{self.event_type} {self.mode} ({self.user})"
