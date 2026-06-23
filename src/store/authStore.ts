@@ -50,6 +50,10 @@ export function getAuthDisplayName(user: AuthUser | null): string | null {
   return getDisplayName(user);
 }
 
+function logAuthError(context: string, error: unknown): void {
+  console.error(`[auth] ${context}`, error);
+}
+
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   status: "idle",
@@ -71,6 +75,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return;
       }
 
+      logAuthError("initialize failed", error);
       set({
         user: null,
         status: "unauthenticated",
@@ -90,6 +95,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       window.location.assign(buildGoogleAuthUrl(state));
     } catch (error) {
+      logAuthError("loginWithGoogle failed", error);
       sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
       set({
         error:
@@ -105,6 +111,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
 
     if (!state || !expectedState || state !== expectedState) {
+      logAuthError("completeGoogleLogin state mismatch", {
+        state,
+        expectedState: expectedState ?? null,
+      });
       set({
         user: null,
         status: "unauthenticated",
@@ -119,6 +129,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const user = await authApi.loginWithGoogleCode(code);
       setAuthenticated(set, user);
     } catch (error) {
+      logAuthError("completeGoogleLogin failed", error);
       set({
         user: null,
         status: "unauthenticated",
@@ -133,7 +144,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
     try {
       await authApi.logout();
-    } catch {
+    } catch (error) {
+      logAuthError("logout failed", error);
       // Clear local auth either way so the UI reflects logged-out state.
     } finally {
       set({ user: null, status: "unauthenticated", error: null });

@@ -18,6 +18,12 @@ export default function GoogleAuthCallbackPage() {
 
     const oauthError = searchParams.get("error");
     if (oauthError) {
+      console.error("[auth] Google OAuth callback error", oauthError);
+      useAuthStore.setState({
+        user: null,
+        status: "unauthenticated",
+        error: "Google sign-in was cancelled or denied. Please try again.",
+      });
       router.replace("/");
       return;
     }
@@ -26,6 +32,12 @@ export default function GoogleAuthCallbackPage() {
     const state = searchParams.get("state");
 
     if (!code) {
+      console.error("[auth] Google OAuth callback missing authorization code");
+      useAuthStore.setState({
+        user: null,
+        status: "unauthenticated",
+        error: "Google sign-in could not be completed. Please try again.",
+      });
       router.replace("/");
       return;
     }
@@ -34,7 +46,8 @@ export default function GoogleAuthCallbackPage() {
       .then(() => {
         router.replace("/");
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("[auth] Google OAuth callback failed", error);
         router.replace("/");
       });
   }, [completeGoogleLogin, router, searchParams]);

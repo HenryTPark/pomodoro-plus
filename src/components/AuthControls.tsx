@@ -50,15 +50,26 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
     }
 
     return (
-      <Button
-        variant="secondary"
-        size="xl"
-        onClick={handleSignIn}
-        title="Sign in with Google"
-        className="cursor-pointer"
-      >
-        <LogIn className="size-7" />
-      </Button>
+      <div className="flex flex-col items-end gap-1">
+        <Button
+          variant="secondary"
+          size="xl"
+          onClick={handleSignIn}
+          title={error ?? "Sign in with Google"}
+          aria-invalid={error ? true : undefined}
+          className={`cursor-pointer${error ? " ring-2 ring-destructive" : ""}`}
+        >
+          <LogIn className="size-7" />
+        </Button>
+        {error ? (
+          <p
+            role="alert"
+            className="max-w-48 text-right text-xs text-destructive"
+          >
+            {error}
+          </p>
+        ) : null}
+      </div>
     );
   }
 
