@@ -17,12 +17,10 @@ const GOOGLE_OAUTH_STATE_KEY = "pomodoro-plus:google-oauth-state";
 interface AuthState {
   user: AuthUser | null;
   status: AuthStatus;
-  error: string | null;
   initialize: () => Promise<void>;
   loginWithGoogle: () => void;
   completeGoogleLogin: (code: string, state: string | null) => Promise<void>;
   logout: () => Promise<void>;
-  clearError: () => void;
 }
 
 function getDisplayName(user: AuthUser): string {
@@ -38,7 +36,6 @@ function setAuthenticated(set: (partial: Partial<AuthState>) => void, user: Auth
   set({
     user,
     status: "authenticated",
-    error: null,
   });
 }
 
@@ -57,30 +54,25 @@ function logAuthError(context: string, error: unknown): void {
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   status: "idle",
-  error: null,
 
   initialize: async () => {
     if (get().status === "loading") {
       return;
     }
 
-    set({ status: "loading", error: null });
+    set({ status: "loading" });
 
     try {
       const user = await authApi.getCurrentUser();
       setAuthenticated(set, user);
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) {
-        set({ user: null, status: "unauthenticated", error: null });
+        set({ user: null, status: "unauthenticated" });
         return;
       }
 
       logAuthError("initialize failed", error);
-      set({
-        user: null,
-        status: "unauthenticated",
-        error: "Unable to check sign-in status.",
-      });
+      set({ user: null, status: "unauthenticated" });
     }
   },
 
@@ -97,12 +89,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     } catch (error) {
       logAuthError("loginWithGoogle failed", error);
       sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
-      set({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Google sign-in is not configured.",
-      });
     }
   },
 
@@ -115,32 +101,24 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         state,
         expectedState: expectedState ?? null,
       });
-      set({
-        user: null,
-        status: "unauthenticated",
-        error: "Google sign-in could not be verified. Please try again.",
-      });
+      set({ user: null, status: "unauthenticated" });
       return;
     }
 
-    set({ status: "loading", error: null });
+    set({ status: "loading" });
 
     try {
       const user = await authApi.loginWithGoogleCode(code);
       setAuthenticated(set, user);
     } catch (error) {
       logAuthError("completeGoogleLogin failed", error);
-      set({
-        user: null,
-        status: "unauthenticated",
-        error: "Google sign-in failed. Please try again.",
-      });
+      set({ user: null, status: "unauthenticated" });
       throw error;
     }
   },
 
   logout: async () => {
-    set({ status: "loading", error: null });
+    set({ status: "loading" });
 
     try {
       await authApi.logout();
@@ -148,9 +126,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       logAuthError("logout failed", error);
       // Clear local auth either way so the UI reflects logged-out state.
     } finally {
-      set({ user: null, status: "unauthenticated", error: null });
+      set({ user: null, status: "unauthenticated" });
     }
   },
-
-  clearError: () => set({ error: null }),
 }));

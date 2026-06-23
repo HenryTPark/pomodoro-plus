@@ -10,21 +10,10 @@ interface AuthControlsProps {
 }
 
 export default function AuthControls({ compact = false }: AuthControlsProps) {
-  const { user, status, error, loginWithGoogle, logout, clearError } =
-    useAuthStore();
+  const { user, status, loginWithGoogle, logout } = useAuthStore();
 
   const isLoading = status === "idle" || status === "loading";
   const displayName = getAuthDisplayName(user);
-
-  const handleSignIn = () => {
-    clearError();
-    loginWithGoogle();
-  };
-
-  const handleSignOut = () => {
-    clearError();
-    void logout();
-  };
 
   if (compact) {
     if (isLoading) {
@@ -40,7 +29,7 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
         <Button
           variant="secondary"
           size="xl"
-          onClick={handleSignOut}
+          onClick={() => void logout()}
           title={`Sign out (${displayName})`}
           className="cursor-pointer"
         >
@@ -50,26 +39,15 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
     }
 
     return (
-      <div className="flex flex-col items-end gap-1">
-        <Button
-          variant="secondary"
-          size="xl"
-          onClick={handleSignIn}
-          title={error ?? "Sign in with Google"}
-          aria-invalid={error ? true : undefined}
-          className={`cursor-pointer${error ? " ring-2 ring-destructive" : ""}`}
-        >
-          <LogIn className="size-7" />
-        </Button>
-        {error ? (
-          <p
-            role="alert"
-            className="max-w-48 text-right text-xs text-destructive"
-          >
-            {error}
-          </p>
-        ) : null}
-      </div>
+      <Button
+        variant="secondary"
+        size="xl"
+        onClick={() => loginWithGoogle()}
+        title="Sign in with Google"
+        className="cursor-pointer"
+      >
+        <LogIn className="size-7" />
+      </Button>
     );
   }
 
@@ -85,7 +63,7 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
             variant="outline"
             size="sm"
             className="w-full cursor-pointer sm:w-auto"
-            onClick={handleSignOut}
+            onClick={() => void logout()}
             disabled={isLoading}
           >
             <LogOut className="size-4" />
@@ -101,7 +79,7 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
             variant="default"
             size="sm"
             className="w-full cursor-pointer sm:w-auto"
-            onClick={handleSignIn}
+            onClick={() => loginWithGoogle()}
             disabled={isLoading}
           >
             <LogIn className="size-4" />
@@ -109,12 +87,6 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
           </Button>
         </div>
       )}
-
-      {error ? (
-        <p className="text-[clamp(0.8rem,1.6vh,0.95rem)] text-destructive">
-          {error}
-        </p>
-      ) : null}
     </div>
   );
 }

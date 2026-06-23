@@ -19,11 +19,7 @@ export default function GoogleAuthCallbackPage() {
     const oauthError = searchParams.get("error");
     if (oauthError) {
       console.error("[auth] Google OAuth callback error", oauthError);
-      useAuthStore.setState({
-        user: null,
-        status: "unauthenticated",
-        error: "Google sign-in was cancelled or denied. Please try again.",
-      });
+      useAuthStore.setState({ user: null, status: "unauthenticated" });
       router.replace("/");
       return;
     }
@@ -33,11 +29,7 @@ export default function GoogleAuthCallbackPage() {
 
     if (!code) {
       console.error("[auth] Google OAuth callback missing authorization code");
-      useAuthStore.setState({
-        user: null,
-        status: "unauthenticated",
-        error: "Google sign-in could not be completed. Please try again.",
-      });
+      useAuthStore.setState({ user: null, status: "unauthenticated" });
       router.replace("/");
       return;
     }
