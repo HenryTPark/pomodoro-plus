@@ -8,10 +8,12 @@ verifiable end to end.
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from core.urls import api_urlpatterns, auth_urlpatterns
 
 
+@ensure_csrf_cookie
 def healthcheck(_request):
     return JsonResponse({"status": "ok"})
 

@@ -1,4 +1,9 @@
 export {
+  useAuthStore,
+  getAuthDisplayName,
+  type AuthStatus,
+} from './authStore';
+export {
   useSettingsStore,
   defaultTemplates,
   type Template,

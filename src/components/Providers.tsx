@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import {
   usePreferencesStore,
   useSessionHistoryStore,
   useSettingsStore,
   useTimerStore,
 } from '@/store';
+import { useAuthStore } from '@/store/authStore';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 const stores = [
@@ -18,6 +19,7 @@ const stores = [
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
+  const initializeAuth = useAuthStore((state) => state.initialize);
 
   useEffect(() => {
     void Promise.all(stores.map((store) => store.persist.rehydrate())).then(
@@ -25,9 +27,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    void initializeAuth();
+  }, [hydrated, initializeAuth]);
+
   if (!hydrated) {
     return null;
   }
 
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <Suspense fallback={null}>{children}</Suspense>
+    </ThemeProvider>
+  );
 }

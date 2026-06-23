@@ -4,6 +4,7 @@ import React from "react";
 import { History, Settings, Timer } from "lucide-react";
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
+import AuthControls from "@/components/AuthControls";
 
 export default function NavBar() {
   const { view, setView, toggleView } = useUIStore();
@@ -22,6 +23,7 @@ export default function NavBar() {
           </div>
 
           <div className="flex items-center gap-3">
+            <AuthControls compact />
             <Button
               variant="secondary"
               size="xl"
