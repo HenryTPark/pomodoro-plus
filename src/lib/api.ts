@@ -159,3 +159,133 @@ export const authApi = {
       body: JSON.stringify({}),
     }),
 };
+
+export type ApiTheme = "light" | "dark" | "system";
+export type ApiTimerMode = "focus" | "break" | "longBreak";
+export type ApiSessionEventType = "completed" | "skipped" | "extended";
+
+export interface ApiUserProfile {
+  focus_minutes: number;
+  break_minutes: number;
+  long_break_minutes: number;
+  cycle: number;
+  active_template_label: string;
+  theme: ApiTheme;
+  sound_enabled: boolean;
+}
+
+export interface ApiTemplate {
+  id: number;
+  label: string;
+  focus: number;
+  short_break: number;
+  long_break: number;
+  cycle: number;
+  is_builtin: boolean;
+}
+
+export interface ApiSessionEvent {
+  id: number;
+  event_type: ApiSessionEventType;
+  mode: ApiTimerMode;
+  template_label: string;
+  session_count: number;
+  duration_seconds: number | null;
+  minutes_added: number | null;
+  client_id: string;
+  occurred_at: string;
+}
+
+export interface SyncTemplateInput {
+  focus: number;
+  short_break: number;
+  long_break: number;
+  cycle: number;
+}
+
+export interface SyncProfileInput {
+  focus_minutes?: number;
+  break_minutes?: number;
+  long_break_minutes?: number;
+  cycle?: number;
+  active_template_label?: string;
+  theme?: ApiTheme;
+  sound_enabled?: boolean;
+}
+
+export interface SyncSessionInput {
+  event_type: ApiSessionEventType;
+  mode: ApiTimerMode;
+  template_label: string;
+  session_count: number;
+  duration_seconds?: number | null;
+  minutes_added?: number | null;
+  client_id: string;
+  occurred_at: string;
+}
+
+export interface SyncInput {
+  profile?: SyncProfileInput;
+  templates?: Record<string, SyncTemplateInput>;
+  sessions?: SyncSessionInput[];
+}
+
+export interface SyncOutput {
+  profile: ApiUserProfile;
+  templates: ApiTemplate[];
+  sessions: ApiSessionEvent[];
+}
+
+export type CreateTemplateInput = Pick<
+  ApiTemplate,
+  "label" | "focus" | "short_break" | "long_break" | "cycle"
+>;
+
+export type UpdateTemplateInput = Partial<CreateTemplateInput>;
+
+export const profileApi = {
+  get: () => apiRequest<ApiUserProfile>("/api/profile/"),
+
+  update: (profile: ApiUserProfile) =>
+    apiRequest<ApiUserProfile>("/api/profile/", {
+      method: "PUT",
+      body: JSON.stringify(profile),
+    }),
+};
+
+export const templatesApi = {
+  list: () => apiRequest<ApiTemplate[]>("/api/templates/"),
+
+  create: (template: CreateTemplateInput) =>
+    apiRequest<ApiTemplate>("/api/templates/", {
+      method: "POST",
+      body: JSON.stringify(template),
+    }),
+
+  update: (id: number, template: UpdateTemplateInput) =>
+    apiRequest<ApiTemplate>(`/api/templates/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(template),
+    }),
+
+  delete: (id: number) =>
+    apiRequest<void>(`/api/templates/${id}/`, {
+      method: "DELETE",
+    }),
+};
+
+export const sessionsApi = {
+  create: (session: Omit<ApiSessionEvent, "id">) =>
+    apiRequest<ApiSessionEvent>("/api/sessions/", {
+      method: "POST",
+      body: JSON.stringify(session),
+    }),
+};
+
+export const syncApi = {
+  push: (snapshot: SyncInput) =>
+    apiRequest<SyncOutput>("/api/sync/", {
+      method: "POST",
+      body: JSON.stringify(snapshot),
+    }),
+};
