@@ -5,12 +5,12 @@ supported variables. A local ``.env`` file (ignored by git) is loaded
 automatically in development.
 """
 
+import os
+import sys
 from pathlib import Path
 
 import dj_database_url
 from dotenv import load_dotenv
-
-import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -105,6 +105,14 @@ DATABASES = {
         conn_max_age=600,
     )
 }
+
+# Use an in-memory SQLite database for the test runner so ``manage.py test``
+# does not require a running Postgres instance.
+if "test" in sys.argv:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
 
 
 # --- Auth ------------------------------------------------------------------

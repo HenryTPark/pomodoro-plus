@@ -241,3 +241,23 @@ class PermissionTests(TestCase):
     def test_sync_requires_authentication(self):
         response = self.client.post(reverse("sync"), {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_templates_require_authentication(self):
+        response = self.client.get(reverse("template-list"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_sessions_require_authentication(self):
+        response = self.client.get(reverse("session-list"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_cannot_access_other_users_template(self):
+        owner = User.objects.create_user(username="owner@example.com", email="owner@example.com")
+        other = User.objects.create_user(username="other@example.com", email="other@example.com")
+        seed_user_defaults(owner)
+        seed_user_defaults(other)
+
+        template = Template.objects.get(user=owner, label="Classic")
+        self.client.force_authenticate(user=other)
+
+        response = self.client.get(reverse("template-detail", args=[template.pk]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
