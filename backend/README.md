@@ -23,7 +23,7 @@ pip install -r requirements.txt
 # 2. Environment variables
 cp .env.example .env   # then edit as needed
 
-# 3. Start Postgres
+# 3. Start Postgres (local container uses trust auth — no password)
 docker compose up -d db
 
 # 4. Migrate and run

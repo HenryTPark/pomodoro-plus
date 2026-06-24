@@ -100,7 +100,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default=os.getenv(
             "DATABASE_URL",
-            "postgres://pomodoro:pomodoro@localhost:5432/pomodoro",
+            "postgres://pomodoro@localhost:5432/pomodoro",
         ),
         conn_max_age=600,
     )
