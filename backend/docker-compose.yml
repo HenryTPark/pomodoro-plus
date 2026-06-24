@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16
+    container_name: pomodoro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pomodoro}
+      POSTGRES_DB: ${POSTGRES_DB:-pomodoro}
+      # Local dev only: no password required inside the container network.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pomodoro_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pomodoro}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pomodoro_pgdata:

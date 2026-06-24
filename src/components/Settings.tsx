@@ -16,6 +16,7 @@ import CycleSlider from "@/components/CycleSlider";
 import AddModal from "@/components/AddModal";
 import EditModal from "@/components/EditModal";
 import DeleteModal from "@/components/DeleteModal";
+import AuthControls from "@/components/AuthControls";
 
 const cardClassName =
   "rounded-2xl border border-border bg-card/70 p-[clamp(0.875rem,2.2vh,1.5rem)] dark:shadow-2xl dark:shadow-slate-950/30 backdrop-blur-xl";
@@ -129,6 +130,20 @@ export default function Settings() {
               onChange={handleCycleChange}
               compact
             />
+          </div>
+        </section>
+
+        <section className={`${cardClassName} shrink-0`}>
+          <div className="space-y-1">
+            <h2 className="text-[clamp(1.25rem,3vh,1.75rem)] font-semibold text-foreground">
+              Account
+            </h2>
+            <p className="truncate text-[clamp(0.85rem,1.8vh,1.05rem)] text-muted-foreground">
+              Sync your data when signed in.
+            </p>
+          </div>
+          <div className="mt-[clamp(0.5rem,1.2vh,0.875rem)]">
+            <AuthControls />
           </div>
         </section>
 
