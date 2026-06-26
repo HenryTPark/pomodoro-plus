@@ -15,6 +15,8 @@ import {
 } from "@/store";
 import TemplateLabels from "@/components/TemplateLabels";
 
+const timerContentWidth = "w-[min(70vw,40vh)] max-w-[45vh]";
+
 export default function Timer() {
   const {
     focusMinutes,
@@ -290,7 +292,7 @@ export default function Timer() {
         </p>
       </div>
 
-      <div className="w-[min(70vw,40vh)] h-[min(70vw,40vh)] max-w-[45vh] max-h-[45vh]">
+      <div className={`${timerContentWidth} h-[min(70vw,40vh)] max-h-[45vh]`}>
         <CircularProgressbar
           value={percentage}
           text={`${minutes}:${seconds.toString().padStart(2, "0")}`}
