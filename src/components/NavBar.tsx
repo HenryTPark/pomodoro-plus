@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import AuthControls from "@/components/AuthControls";
 
 export default function NavBar() {
-  const { view, setView, toggleView } = useUIStore();
+  const { view, setView } = useUIStore();
 
   return (
     <nav className="border-b border-border bg-card/95 dark:shadow-xl dark:shadow-slate-950/20 backdrop-blur-xl">
@@ -23,38 +23,43 @@ export default function NavBar() {
           </div>
 
           <div className="flex items-center gap-3">
-            <AuthControls compact />
             <Button
-              variant="secondary"
+              variant={view === "timer" ? "default" : "secondary"}
               size="xl"
-              onClick={() => toggleView("history")}
-              title={view === "history" ? "Back to Timer" : "History"}
+              onClick={() => setView("timer")}
+              title="Timer"
               className="cursor-pointer"
             >
               <div className="flex justify-around items-center">
-                {view === "history" ? (
-                  <Timer className="size-7" />
-                ) : (
-                  <History className="size-7" />
-                )}
+                <Timer className="size-7" />
               </div>
             </Button>
 
             <Button
-              variant="secondary"
+              variant={view === "history" ? "default" : "secondary"}
               size="xl"
-              onClick={() => toggleView("settings")}
-              title={view === "settings" ? "Back to Timer" : "Settings"}
+              onClick={() => setView("history")}
+              title="History"
               className="cursor-pointer"
             >
               <div className="flex justify-around items-center">
-                {view === "settings" ? (
-                  <Timer className="size-7" />
-                ) : (
-                  <Settings className="size-7" />
-                )}
+                <History className="size-7" />
               </div>
             </Button>
+
+            <Button
+              variant={view === "settings" ? "default" : "secondary"}
+              size="xl"
+              onClick={() => setView("settings")}
+              title="Settings"
+              className="cursor-pointer"
+            >
+              <div className="flex justify-around items-center">
+                <Settings className="size-7" />
+              </div>
+            </Button>
+
+            <AuthControls compact />
           </div>
         </div>
       </div>
