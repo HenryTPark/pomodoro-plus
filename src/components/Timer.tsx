@@ -282,22 +282,22 @@ export default function Timer() {
 
   return (
     <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 px-4 py-4 text-foreground">
-      <div className={`flex flex-col items-center gap-5 ${timerContentWidth}`}>
+      <div className={timerContentWidth}>
         <TemplateLabels />
+      </div>
 
-        <div className="w-full text-center">
-          <p className="font-medium uppercase tracking-[0.24em] text-muted-foreground text-[clamp(1rem,2vw,1.25rem)]">
-            {modeLabel} • Session {count} of {cycle}
-          </p>
-        </div>
+      <div className="text-center">
+        <p className="whitespace-nowrap font-medium uppercase tracking-[0.24em] max-sm:tracking-[0.12em] text-muted-foreground text-[clamp(1rem,2vw,1.25rem)]">
+          {modeLabel} • Session {count} of {cycle}
+        </p>
+      </div>
 
-        <div className="aspect-square w-full">
-          <CircularProgressbar
-            value={percentage}
-            text={`${minutes}:${seconds.toString().padStart(2, "0")}`}
-            styles={progressBarStyle}
-          />
-        </div>
+      <div className={`aspect-square w-full ${timerContentWidth}`}>
+        <CircularProgressbar
+          value={percentage}
+          text={`${minutes}:${seconds.toString().padStart(2, "0")}`}
+          styles={progressBarStyle}
+        />
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2">
