@@ -84,53 +84,28 @@ Test modules:
 - `core.tests.test_api` — profile/templates/sessions/sync API and permissions
 - `core.tests.test_smoke` — Google login (mocked) → sync → read-back flow
 
-## Production deployment (Render + Neon)
+## Production deployment
 
-Recommended stack for a live demo (~**$7/month** total):
+The API runs on [Render](https://render.com); Postgres is on [Neon](https://neon.tech). Service definition: `render.yaml` at the repo root.
 
-| Service | Plan | Cost | Notes |
-|---------|------|------|-------|
-| [Render](https://render.com) web service | **Starter** | ~$7/mo | Always on — no cold starts |
-| [Neon](https://neon.tech) Postgres | Free | $0 | 0.5 GB storage; DB may scale to zero after idle |
+**Render** deploys on git push to the connected branch. `backend/build.sh` installs dependencies and runs migrations; Gunicorn serves `config.wsgi:application` (see `render.yaml` for commands and health check path).
 
-**Alternative:** Render **Free** ($0) works for hobby use but spins down after ~15 min idle; the first request after sleep can take 30–60s. The blueprint defaults to Starter; change `plan: starter` → `plan: free` in `render.yaml` if you prefer.
+**Neon** — `DATABASE_URL` is the pooled connection string from the Neon dashboard (`?sslmode=require`).
 
-### 1. Neon — Postgres
+Required environment variables on Render:
 
-1. Sign up at [neon.tech](https://neon.tech) and create a project.
-2. Copy the **pooled** connection string (`DATABASE_URL`, includes `?sslmode=require`).
-
-### 2. Render — Django API
-
-1. Push this repo to GitHub (Render deploys from git).
-2. In [Render](https://dashboard.render.com) → **New** → **Blueprint** and point at the repo (uses `render.yaml`),  
-   **or** **New** → **Web Service** with:
-   - **Root directory:** `backend`
-   - **Build command:** `./build.sh`
-   - **Start command:** `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
-   - **Health check path:** `/api/health/`
-3. Set environment variables (replace placeholders):
-
-| Variable | Example |
+| Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | Neon pooled connection string |
-| `DJANGO_SECRET_KEY` | Long random string (Render can auto-generate) |
-| `DJANGO_DEBUG` | `false` |
-| `DJANGO_ALLOWED_HOSTS` | `pomodoro-plus-api.onrender.com` |
-| `CORS_ALLOWED_ORIGINS` | `https://your-app.vercel.app` |
-| `CSRF_TRUSTED_ORIGINS` | `https://your-app.vercel.app` |
-| `GOOGLE_OAUTH_CLIENT_ID` | Same as Vercel |
-| `GOOGLE_OAUTH_CLIENT_SECRET` | From Google Cloud |
-| `GOOGLE_OAUTH_CALLBACK_URL` | `https://your-app.vercel.app/auth/callback/google` |
+| `DJANGO_SECRET_KEY` | Django secret key |
+| `DJANGO_DEBUG` | `false` in production |
+| `DJANGO_ALLOWED_HOSTS` | Render hostname (e.g. `pomodoro-plus-api.onrender.com`) |
+| `CORS_ALLOWED_ORIGINS` | Vercel frontend origin |
+| `CSRF_TRUSTED_ORIGINS` | Same as CORS origins |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret |
+| `GOOGLE_OAUTH_CALLBACK_URL` | Frontend callback URL |
 
-4. After deploy, verify `GET https://<your-service>.onrender.com/api/health/` returns `{"status":"ok"}`.
+After deploy, confirm `GET /api/health/` returns `{"status":"ok"}`.
 
-### 3. Vercel — point frontend at the API
-
-Add or update in Vercel → **Settings** → **Environment Variables**:
-
-```
-NEXT_PUBLIC_API_URL=https://<your-service>.onrender.com
-```
-
-Redeploy the frontend so the new value is baked into the build.
+**Vercel** — `NEXT_PUBLIC_API_URL` must match the Render service URL. Redeploy the frontend after changing it (build-time variable).
