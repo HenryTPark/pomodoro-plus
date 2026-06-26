@@ -83,3 +83,29 @@ Test modules:
 - `core.tests.test_auth` — sign-up seeding and auth endpoints
 - `core.tests.test_api` — profile/templates/sessions/sync API and permissions
 - `core.tests.test_smoke` — Google login (mocked) → sync → read-back flow
+
+## Production deployment
+
+The API runs on [Render](https://render.com); Postgres is on [Neon](https://neon.tech). Service definition: `render.yaml` at the repo root.
+
+**Render** deploys on git push to the connected branch. `backend/build.sh` installs dependencies and runs migrations; Gunicorn serves `config.wsgi:application` (see `render.yaml` for commands and health check path).
+
+**Neon** — `DATABASE_URL` is the pooled connection string from the Neon dashboard (`?sslmode=require`).
+
+Required environment variables on Render:
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | Neon pooled connection string |
+| `DJANGO_SECRET_KEY` | Django secret key |
+| `DJANGO_DEBUG` | `false` in production |
+| `DJANGO_ALLOWED_HOSTS` | Render hostname (e.g. `pomodoro-plus-api.onrender.com`) |
+| `CORS_ALLOWED_ORIGINS` | Vercel frontend origin |
+| `CSRF_TRUSTED_ORIGINS` | Same as CORS origins |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret |
+| `GOOGLE_OAUTH_CALLBACK_URL` | Frontend callback URL |
+
+After deploy, confirm `GET /api/health/` returns `{"status":"ok"}`.
+
+**Vercel** — `NEXT_PUBLIC_API_URL` must match the Render service URL. Redeploy the frontend after changing it (build-time variable).

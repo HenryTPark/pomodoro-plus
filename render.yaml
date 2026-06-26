@@ -1,0 +1,38 @@
+# Render Blueprint — Pomodoro Plus Django API
+#
+# Deploy: connect this repo in the Render dashboard and apply the blueprint,
+# or create a Web Service manually with root directory "backend".
+#
+# Use Neon (free) for Postgres — paste DATABASE_URL in the Render env vars.
+# https://neon.tech
+
+services:
+  - type: web
+    name: pomodoro-plus-api
+    runtime: python
+    rootDir: backend
+    plan: starter
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH_CALLBACK_URL
+        sync: false
