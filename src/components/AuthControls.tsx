@@ -9,6 +9,8 @@ interface AuthControlsProps {
   compact?: boolean;
 }
 
+const compactButtonClass = "size-8 p-0 sm:size-auto sm:h-11 sm:px-4";
+
 export default function AuthControls({ compact = false }: AuthControlsProps) {
   const { user, status, loginWithGoogle, logout } = useAuthStore();
 
@@ -18,7 +20,12 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
   if (compact) {
     if (isLoading) {
       return (
-        <Button variant="secondary" size="xl" disabled className="cursor-default">
+        <Button
+          variant="secondary"
+          size="xl"
+          disabled
+          className={`${compactButtonClass} cursor-default`}
+        >
           <span className="text-sm">…</span>
         </Button>
       );
@@ -31,9 +38,9 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
           size="xl"
           onClick={() => void logout()}
           title={`Sign out (${displayName})`}
-          className="cursor-pointer"
+          className={`${compactButtonClass} cursor-pointer`}
         >
-          <LogOut className="size-7" />
+          <LogOut className="size-5 sm:size-7" />
         </Button>
       );
     }
@@ -44,9 +51,9 @@ export default function AuthControls({ compact = false }: AuthControlsProps) {
         size="xl"
         onClick={() => loginWithGoogle()}
         title="Sign in with Google"
-        className="cursor-pointer"
+        className={`${compactButtonClass} cursor-pointer`}
       >
-        <LogIn className="size-7" />
+        <LogIn className="size-5 sm:size-7" />
       </Button>
     );
   }

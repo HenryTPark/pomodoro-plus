@@ -6,32 +6,34 @@ import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import AuthControls from "@/components/AuthControls";
 
+const navButtonClass = "size-8 p-0 sm:size-auto sm:h-11 sm:px-4 cursor-pointer";
+
 export default function NavBar() {
   const { view, setView } = useUIStore();
 
   return (
     <nav className="border-b border-border bg-card/95 dark:shadow-xl dark:shadow-slate-950/20 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
+      <div className="mx-auto max-w-7xl px-3 sm:px-8 lg:px-10">
         <div className="flex h-[var(--nav-height)] items-center justify-between">
           <div className="shrink-0">
             <h1
               onClick={() => setView("timer")}
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-foreground cursor-pointer"
+              className="text-xl sm:text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-foreground cursor-pointer"
             >
               Pomodoro+
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <Button
               variant={view === "timer" ? "default" : "secondary"}
               size="xl"
               onClick={() => setView("timer")}
               title="Timer"
-              className="cursor-pointer"
+              className={navButtonClass}
             >
               <div className="flex justify-around items-center">
-                <Timer className="size-7" />
+                <Timer className="size-5 sm:size-7" />
               </div>
             </Button>
 
@@ -40,10 +42,10 @@ export default function NavBar() {
               size="xl"
               onClick={() => setView("history")}
               title="History"
-              className="cursor-pointer"
+              className={navButtonClass}
             >
               <div className="flex justify-around items-center">
-                <History className="size-7" />
+                <History className="size-5 sm:size-7" />
               </div>
             </Button>
 
@@ -52,10 +54,10 @@ export default function NavBar() {
               size="xl"
               onClick={() => setView("settings")}
               title="Settings"
-              className="cursor-pointer"
+              className={navButtonClass}
             >
               <div className="flex justify-around items-center">
-                <Settings className="size-7" />
+                <Settings className="size-5 sm:size-7" />
               </div>
             </Button>
 
