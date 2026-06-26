@@ -8,7 +8,6 @@ interface UIState {
 
   // Actions
   setView: (view: AppView) => void;
-  toggleView: (view: Exclude<AppView, 'timer'>) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -17,6 +16,4 @@ export const useUIStore = create<UIState>((set) => ({
 
   // Actions
   setView: (view) => set({ view }),
-  toggleView: (view) =>
-    set((state) => ({ view: state.view === view ? 'timer' : view })),
 }));
