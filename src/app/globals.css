@@ -143,16 +143,16 @@
   html
   {
     @apply font-sans;
-    min-height: 100vh;
-    max-height: 100vh;
+    min-height: 100dvh;
+    max-height: 100dvh;
     overflow: hidden;
   }
 
   body
   {
     @apply bg-background text-foreground;
-    min-height: 100vh;
-    max-height: 100vh;
+    min-height: 100dvh;
+    max-height: 100dvh;
     overflow: hidden;
   }
 }

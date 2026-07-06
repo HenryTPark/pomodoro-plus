@@ -74,8 +74,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col items-center overflow-y-auto px-2 py-3 text-foreground sm:px-3">
-      <div className="my-auto flex w-full max-w-[min(100vw-1rem,72rem)] shrink-0 flex-col gap-[clamp(0.625rem,1.6vh,1.125rem)]">
+    <div className="flex h-full min-h-0 flex-col items-center overflow-y-auto px-2 py-3 pb-[max(2.5rem,calc(env(safe-area-inset-bottom,0px)+2.5rem))] text-foreground sm:px-3">
+      <div className="flex min-h-full w-full max-w-[min(100vw-1rem,72rem)] flex-col gap-[clamp(0.625rem,1.6vh,1.125rem)]">
         <section className={`${cardClassName} shrink-0`}>
           <div className="flex flex-col gap-[clamp(0.5rem,1.2vh,0.875rem)] sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
