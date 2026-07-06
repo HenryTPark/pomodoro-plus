@@ -13,6 +13,8 @@ export interface Templates {
   [key: string]: Template;
 }
 
+export const MAX_TEMPLATES = 10;
+
 interface SettingsState {
   focusMinutes: number;
   breakMinutes: number;
