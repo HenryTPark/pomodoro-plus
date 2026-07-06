@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   description: "A modern pomodoro timer app built with Next.js",
 };
 
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,7 +37,7 @@ export default function RootLayout({
       <body className="flex min-h-screen min-w-full flex-col bg-background text-foreground overflow-hidden">
         <Providers>
           <NavBar />
-          <main className="h-[calc(100vh-var(--nav-height))] min-h-0 overflow-hidden">
+          <main className="h-[calc(100dvh-var(--nav-height))] min-h-0 overflow-hidden">
             {children}
           </main>
         </Providers>
