@@ -6,7 +6,7 @@ import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import AuthControls from "@/components/AuthControls";
 
-const navButtonClass = "size-8 p-0 sm:size-auto sm:h-11 sm:px-4 cursor-pointer";
+const navButtonClass = "h-11 px-4 cursor-pointer";
 
 export default function NavBar() {
   const { view, setView } = useUIStore();
@@ -24,7 +24,7 @@ export default function NavBar() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex items-center gap-3">
             <Button
               variant={view === "timer" ? "default" : "secondary"}
               size="xl"
@@ -33,7 +33,7 @@ export default function NavBar() {
               className={navButtonClass}
             >
               <div className="flex justify-around items-center">
-                <Timer className="size-5 sm:size-7" />
+                <Timer className="size-7" />
               </div>
             </Button>
 
@@ -45,7 +45,7 @@ export default function NavBar() {
               className={navButtonClass}
             >
               <div className="flex justify-around items-center">
-                <History className="size-5 sm:size-7" />
+                <History className="size-7" />
               </div>
             </Button>
 
@@ -57,7 +57,7 @@ export default function NavBar() {
               className={navButtonClass}
             >
               <div className="flex justify-around items-center">
-                <Settings className="size-5 sm:size-7" />
+                <Settings className="size-7" />
               </div>
             </Button>
 
