@@ -6,6 +6,7 @@ export {
 export {
   useSettingsStore,
   defaultTemplates,
+  MAX_TEMPLATES,
   type Template,
   type Templates,
 } from './settingsStore';

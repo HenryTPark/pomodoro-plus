@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import TimeSlider from "@/components/TimeSlider";
 import CycleSlider from "@/components/CycleSlider";
-import { useSettingsStore } from "@/store";
+import { MAX_TEMPLATES, useSettingsStore } from "@/store";
 
 export default function AddModal() {
   const { templates, addTemplate, changeTemplate, setTemplateLabel } =
@@ -30,8 +30,8 @@ export default function AddModal() {
   const [newCycle, setNewCycle] = useState(4);
 
   function handleAdd() {
-    if (Object.keys(templates).length >= 5) {
-      alert("You can only have 5 templates in total.");
+    if (Object.keys(templates).length >= MAX_TEMPLATES) {
+      alert(`You can only have ${MAX_TEMPLATES} templates in total.`);
       return;
     }
 
