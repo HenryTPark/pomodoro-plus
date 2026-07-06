@@ -283,7 +283,7 @@ export default function Timer() {
     mode === "focus" ? "Focus" : mode === "break" ? "Break" : "Long Break";
 
   return (
-    <div className="flex h-full min-h-0 flex-col items-center justify-start gap-5 max-sm:gap-3 max-sm:pt-3 px-4 max-[360px]:px-2 py-4 sm:justify-center text-foreground">
+    <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 max-sm:gap-3 px-4 max-[360px]:px-2 py-4 text-foreground">
       <div className={timerContentWidth}>
         <TemplateLabels />
       </div>
