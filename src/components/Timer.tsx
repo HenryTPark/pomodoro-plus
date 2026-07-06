@@ -16,6 +16,7 @@ import {
 import TemplateLabels from "@/components/TemplateLabels";
 
 const timerContentWidth = "w-[min(70vw,40vh)] max-w-[45vh]";
+const timerButtonClass = "cursor-pointer max-[360px]:h-9 max-[360px]:px-3";
 
 export default function Timer() {
   const {
@@ -306,7 +307,7 @@ export default function Timer() {
           size="xl"
           onClick={() => addTime(1)}
           title="Add 1 minute"
-          className="text-2xl font-semibold max-[360px]:h-9 max-[360px]:px-3 max-[360px]:text-xl"
+          className={`${timerButtonClass} text-2xl font-semibold max-[360px]:text-xl`}
         >
           +1
         </Button>
@@ -316,7 +317,7 @@ export default function Timer() {
           size="xl"
           onClick={stop}
           title="Stop timer"
-          className="max-[360px]:h-9 max-[360px]:px-3"
+          className={timerButtonClass}
         >
           <Square className="size-7 max-[360px]:size-6" />
         </Button>
@@ -327,7 +328,7 @@ export default function Timer() {
             onClick={() => setPaused(false)}
             title="Start timer"
             variant="outline"
-            className="max-[360px]:h-9 max-[360px]:px-3"
+            className={timerButtonClass}
           >
             <Play className="size-7 max-[360px]:size-6" />
           </Button>
@@ -337,7 +338,7 @@ export default function Timer() {
             onClick={() => setPaused(true)}
             title="Pause timer"
             variant="outline"
-            className="max-[360px]:h-9 max-[360px]:px-3"
+            className={timerButtonClass}
           >
             <Pause className="size-7 max-[360px]:size-6" />
           </Button>
@@ -351,7 +352,7 @@ export default function Timer() {
             setPaused(false);
           }}
           title="Skip to next session"
-          className="max-[360px]:h-9 max-[360px]:px-3"
+          className={timerButtonClass}
         >
           <StepForward className="size-7 max-[360px]:size-6" />
         </Button>
@@ -361,7 +362,7 @@ export default function Timer() {
           size="xl"
           onClick={() => addTime(5)}
           title="Add 5 minutes"
-          className="text-2xl font-semibold max-[360px]:h-9 max-[360px]:px-3 max-[360px]:text-xl"
+          className={`${timerButtonClass} text-2xl font-semibold max-[360px]:text-xl`}
         >
           +5
         </Button>
