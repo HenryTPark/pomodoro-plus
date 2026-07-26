@@ -1,54 +1,34 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createLocalStorage, persistOptions, STORAGE_KEYS } from '@/lib/storage';
-import type { TimerMode } from './timerStore';
+import {
+  aggregateLegacyEvents,
+  type LegacyCompletedEvent,
+  type LegacyExtendedEvent,
+  type LegacySkippedEvent,
+  type SessionRecord,
+} from '@/lib/sessionHistory';
+
+export type {
+  SessionRecord,
+  TemplateSnapshot,
+} from '@/lib/sessionHistory';
 
 const MAX_HISTORY = 500;
 
-export interface CompletedSession {
-  id: string;
-  mode: TimerMode;
-  templateLabel: string;
-  sessionCount: number;
-  durationSeconds: number;
-  timestamp: number;
-}
-
-export interface SkippedSession {
-  id: string;
-  mode: TimerMode;
-  templateLabel: string;
-  sessionCount: number;
-  durationSeconds: number;
-  timestamp: number;
-}
-
-export interface ExtendedSession {
-  id: string;
-  mode: TimerMode;
-  templateLabel: string;
-  sessionCount: number;
-  minutesAdded: number;
-  timestamp: number;
-}
-
 interface SessionHistoryState {
-  completedSessions: CompletedSession[];
-  skippedSessions: SkippedSession[];
-  extendedSessions: ExtendedSession[];
-  logCompleted: (
-    data: Omit<CompletedSession, 'id' | 'timestamp'>,
-  ) => void;
-  logSkipped: (data: Omit<SkippedSession, 'id' | 'timestamp'>) => void;
-  logExtended: (
-    data: Omit<ExtendedSession, 'id' | 'timestamp'>,
-  ) => void;
+  sessions: SessionRecord[];
+  logSession: (data: Omit<SessionRecord, 'id' | 'timestamp'>) => void;
 }
 
-type PersistedSessionHistory = Pick<
-  SessionHistoryState,
-  'completedSessions' | 'skippedSessions' | 'extendedSessions'
->;
+type PersistedSessionHistory = Pick<SessionHistoryState, 'sessions'>;
+
+interface LegacyPersistedSessionHistory {
+  completedSessions?: LegacyCompletedEvent[];
+  skippedSessions?: LegacySkippedEvent[];
+  extendedSessions?: LegacyExtendedEvent[];
+  sessions?: SessionRecord[];
+}
 
 // This is used to identify the session in the history
 // may need to change this to a more secure way to create a unique ID
@@ -56,38 +36,39 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function trimHistory<T>(items: T[]) {
+function trimHistory(items: SessionRecord[]) {
   return items.slice(0, MAX_HISTORY);
+}
+
+function migrateSessionHistory(
+  persistedState: unknown,
+  version: number,
+): PersistedSessionHistory {
+  const state = (persistedState ?? {}) as LegacyPersistedSessionHistory;
+
+  if (version >= 1 && Array.isArray(state.sessions)) {
+    return { sessions: state.sessions };
+  }
+
+  return {
+    sessions: aggregateLegacyEvents({
+      completed: state.completedSessions ?? [],
+      skipped: state.skippedSessions ?? [],
+      extended: state.extendedSessions ?? [],
+    }),
+  };
 }
 
 export const useSessionHistoryStore = create<SessionHistoryState>()(
   persist(
     (set) => ({
-      completedSessions: [],
-      skippedSessions: [],
-      extendedSessions: [],
+      sessions: [],
 
-      logCompleted: (data) =>
+      logSession: (data) =>
         set((state) => ({
-          completedSessions: trimHistory([
+          sessions: trimHistory([
             { ...data, id: createId(), timestamp: Date.now() },
-            ...state.completedSessions,
-          ]),
-        })),
-
-      logSkipped: (data) =>
-        set((state) => ({
-          skippedSessions: trimHistory([
-            { ...data, id: createId(), timestamp: Date.now() },
-            ...state.skippedSessions,
-          ]),
-        })),
-
-      logExtended: (data) =>
-        set((state) => ({
-          extendedSessions: trimHistory([
-            { ...data, id: createId(), timestamp: Date.now() },
-            ...state.extendedSessions,
+            ...state.sessions,
           ]),
         })),
     }),
@@ -95,10 +76,10 @@ export const useSessionHistoryStore = create<SessionHistoryState>()(
       name: STORAGE_KEYS.history,
       storage: createLocalStorage<PersistedSessionHistory>(),
       partialize: (state) => ({
-        completedSessions: state.completedSessions,
-        skippedSessions: state.skippedSessions,
-        extendedSessions: state.extendedSessions,
+        sessions: state.sessions,
       }),
+      version: 1,
+      migrate: migrateSessionHistory,
       ...persistOptions,
     },
   ),
