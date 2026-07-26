@@ -41,21 +41,86 @@ export default function Timer() {
   } = useTimerStore();
 
   const soundEnabled = usePreferencesStore((state) => state.soundEnabled);
-  const logCompleted = useSessionHistoryStore((state) => state.logCompleted);
-  const logSkipped = useSessionHistoryStore((state) => state.logSkipped);
-  const logExtended = useSessionHistoryStore((state) => state.logExtended);
+  const logSession = useSessionHistoryStore((state) => state.logSession);
 
   const secondsLeftRef = useRef(secondsLeft);
   const isPausedRef = useRef(isPaused);
   const modeRef = useRef(mode);
   const countRef = useRef(count);
   const elapsedRef = useRef(elapsedSeconds);
+  const extensionCountRef = useRef(0);
+  const minutesExtendedRef = useRef(0);
+  const pauseCountRef = useRef(0);
+  const startedAtRef = useRef<number | null>(null);
+  const plannedSecondsRef = useRef(
+    getSecondsForMode(mode, {
+      focusMinutes,
+      breakMinutes,
+      longBreakMinutes,
+    }),
+  );
 
   secondsLeftRef.current = secondsLeft;
   isPausedRef.current = isPaused;
   modeRef.current = mode;
   countRef.current = count;
   elapsedRef.current = elapsedSeconds;
+
+  const resetSegmentTracking = useCallback(
+    (plannedSeconds: number) => {
+      elapsedRef.current = 0;
+      setElapsedSeconds(0);
+      extensionCountRef.current = 0;
+      minutesExtendedRef.current = 0;
+      pauseCountRef.current = 0;
+      startedAtRef.current = null;
+      plannedSecondsRef.current = plannedSeconds;
+    },
+    [setElapsedSeconds],
+  );
+
+  const logCurrentSegment = useCallback(
+    (outcome: "completed" | "skipped" | "stopped") => {
+      const durationSeconds = elapsedRef.current;
+      const extensionCount = extensionCountRef.current;
+
+      if (durationSeconds === 0 && extensionCount === 0) {
+        return;
+      }
+
+      const endedAt = Date.now();
+      const pausedSeconds =
+        startedAtRef.current === null
+          ? 0
+          : Math.max(
+              0,
+              Math.round((endedAt - startedAtRef.current) / 1000) -
+                durationSeconds,
+            );
+
+      const settings = useSettingsStore.getState();
+      logSession({
+        mode: modeRef.current,
+        templateLabel: settings.templateLabel,
+        sessionCount: countRef.current,
+        outcome,
+        durationSeconds,
+        plannedSeconds: plannedSecondsRef.current,
+        extensionCount,
+        minutesExtended: minutesExtendedRef.current,
+        pauseCount: pauseCountRef.current,
+        pausedSeconds,
+        startedAt: startedAtRef.current,
+        templateSnapshot: {
+          focusMinutes: settings.focusMinutes,
+          breakMinutes: settings.breakMinutes,
+          longBreakMinutes: settings.longBreakMinutes,
+          cycle: settings.cycle,
+        },
+      });
+    },
+    [logSession],
+  );
 
   const playSound = useCallback(() => {
     if (!soundEnabled) {
@@ -86,6 +151,14 @@ export default function Timer() {
 
   const setPaused = useCallback(
     (value: boolean) => {
+      if (!value) {
+        if (startedAtRef.current === null) {
+          startedAtRef.current = Date.now();
+        }
+      } else if (!isPausedRef.current && startedAtRef.current !== null) {
+        pauseCountRef.current += 1;
+      }
+
       setIsPaused(value);
       isPausedRef.current = value;
     },
@@ -102,24 +175,10 @@ export default function Timer() {
 
   const switchMode = useCallback(
     (reason: "completed" | "skipped" = "completed") => {
-      const templateLabel = useSettingsStore.getState().templateLabel;
       const currentMode = modeRef.current;
       const currentCount = countRef.current;
-      const logPayload = {
-        mode: currentMode,
-        templateLabel,
-        sessionCount: currentCount,
-        durationSeconds: elapsedRef.current,
-      };
 
-      if (reason === "completed") {
-        logCompleted(logPayload);
-      } else {
-        logSkipped(logPayload);
-      }
-
-      elapsedRef.current = 0;
-      setElapsedSeconds(0);
+      logCurrentSegment(reason);
 
       let nextMode: TimerMode;
       let nextSeconds: number;
@@ -146,6 +205,8 @@ export default function Timer() {
         }
       }
 
+      resetSegmentTracking(nextSeconds);
+
       setMode(nextMode);
       modeRef.current = nextMode;
 
@@ -159,12 +220,11 @@ export default function Timer() {
       breakMinutes,
       cycle,
       focusMinutes,
-      logCompleted,
-      logSkipped,
+      logCurrentSegment,
       longBreakMinutes,
       playSound,
+      resetSegmentTracking,
       setCount,
-      setElapsedSeconds,
       setMode,
       setPaused,
       setSecondsLeft,
@@ -201,10 +261,14 @@ export default function Timer() {
 
     secondsLeftRef.current = newSeconds;
     setSecondsLeft(newSeconds);
-
-    elapsedRef.current = 0;
-    setElapsedSeconds(0);
-  }, [focusMinutes, breakMinutes, longBreakMinutes, setSecondsLeft, setElapsedSeconds]);
+    resetSegmentTracking(newSeconds);
+  }, [
+    focusMinutes,
+    breakMinutes,
+    longBreakMinutes,
+    resetSegmentTracking,
+    setSecondsLeft,
+  ]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -251,6 +315,7 @@ export default function Timer() {
   });
 
   function stop() {
+    logCurrentSegment("stopped");
     setPaused(true);
 
     const resetSeconds = focusMinutes * 60;
@@ -263,20 +328,15 @@ export default function Timer() {
     setCount(1);
     countRef.current = 1;
 
-    elapsedRef.current = 0;
-    setElapsedSeconds(0);
+    resetSegmentTracking(resetSeconds);
   }
 
   function addTime(minutesToAdd: number) {
     secondsLeftRef.current += minutesToAdd * 60;
     setSecondsLeft(secondsLeftRef.current);
 
-    logExtended({
-      mode: modeRef.current,
-      templateLabel: useSettingsStore.getState().templateLabel,
-      sessionCount: countRef.current,
-      minutesAdded: minutesToAdd,
-    });
+    extensionCountRef.current += 1;
+    minutesExtendedRef.current += minutesToAdd;
   }
 
   const modeLabel =
