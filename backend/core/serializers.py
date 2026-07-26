@@ -57,6 +57,13 @@ class SessionEventSerializer(serializers.ModelSerializer):
             "session_count",
             "duration_seconds",
             "minutes_added",
+            "extension_count",
+            "minutes_extended",
+            "planned_seconds",
+            "pause_count",
+            "paused_seconds",
+            "started_at",
+            "template_snapshot",
             "client_id",
             "occurred_at",
         )
@@ -110,6 +117,13 @@ class SyncSessionInputSerializer(serializers.Serializer):
     session_count = serializers.IntegerField(min_value=0)
     duration_seconds = serializers.IntegerField(min_value=0, required=False, allow_null=True)
     minutes_added = serializers.IntegerField(min_value=1, required=False, allow_null=True)
+    extension_count = serializers.IntegerField(min_value=0, required=False, default=0)
+    minutes_extended = serializers.IntegerField(min_value=0, required=False, default=0)
+    planned_seconds = serializers.IntegerField(min_value=0, required=False, allow_null=True)
+    pause_count = serializers.IntegerField(min_value=0, required=False, default=0)
+    paused_seconds = serializers.IntegerField(min_value=0, required=False, default=0)
+    started_at = serializers.DateTimeField(required=False, allow_null=True)
+    template_snapshot = serializers.JSONField(required=False, allow_null=True)
     client_id = serializers.CharField(max_length=100)
     occurred_at = serializers.DateTimeField()
 
