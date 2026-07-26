@@ -13,6 +13,7 @@ PROFILE_FIELDS = (
     "long_break_minutes",
     "cycle",
     "active_template_label",
+    "active_tag",
     "theme",
     "sound_enabled",
 )
@@ -130,6 +131,7 @@ def merge_local_snapshot(user: User, data: dict) -> dict:
             event_type=session["event_type"],
             mode=session["mode"],
             template_label=session["template_label"],
+            tag=session.get("tag"),
             session_count=session["session_count"],
             duration_seconds=session.get("duration_seconds"),
             minutes_added=session.get("minutes_added"),

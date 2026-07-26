@@ -30,6 +30,7 @@ class ProfileApiTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["active_template_label"], "Classic")
+        self.assertIsNone(response.data["active_tag"])
         self.assertEqual(response.data["theme"], "dark")
 
     def test_put_profile(self):
@@ -41,6 +42,7 @@ class ProfileApiTests(ApiTestCase):
                 "long_break_minutes": 20,
                 "cycle": 3,
                 "active_template_label": "Classic",
+                "active_tag": "Deep Work",
                 "theme": "light",
                 "sound_enabled": False,
             },
@@ -50,8 +52,30 @@ class ProfileApiTests(ApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         profile = UserProfile.objects.get(user=self.user)
         self.assertEqual(profile.focus_minutes, 30)
+        self.assertEqual(profile.active_tag, "Deep Work")
         self.assertEqual(profile.theme, "light")
         self.assertFalse(profile.sound_enabled)
+
+    def test_put_profile_normalizes_blank_active_tag_to_null(self):
+        response = self.client.put(
+            reverse("profile"),
+            {
+                "focus_minutes": 25,
+                "break_minutes": 5,
+                "long_break_minutes": 15,
+                "cycle": 4,
+                "active_template_label": "Classic",
+                "active_tag": "   ",
+                "theme": "dark",
+                "sound_enabled": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertIsNone(profile.active_tag)
+        self.assertIsNone(response.data["active_tag"])
 
 
 class TemplateApiTests(ApiTestCase):
@@ -115,6 +139,30 @@ class SessionApiTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(SessionEvent.objects.filter(user=self.user).count(), 1)
+        event = SessionEvent.objects.get(user=self.user, client_id="local-1")
+        self.assertIsNone(event.tag)
+        self.assertIsNone(response.data["tag"])
+
+    def test_create_session_with_tag(self):
+        response = self.client.post(
+            reverse("session-list"),
+            {
+                "event_type": "completed",
+                "mode": "break",
+                "template_label": "Classic",
+                "tag": "Deep Work",
+                "session_count": 1,
+                "duration_seconds": 300,
+                "client_id": "tagged-session-1",
+                "occurred_at": "2026-06-22T10:05:00Z",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        event = SessionEvent.objects.get(user=self.user, client_id="tagged-session-1")
+        self.assertEqual(event.tag, "Deep Work")
+        self.assertEqual(response.data["tag"], "Deep Work")
 
     def test_create_stopped_session_with_unified_fields(self):
         response = self.client.post(
@@ -219,6 +267,7 @@ class SyncApiTests(ApiTestCase):
                 "profile": {
                     "focus_minutes": 30,
                     "theme": "system",
+                    "active_tag": "Deep Work",
                 },
                 "templates": {
                     "Side Project": {
@@ -233,6 +282,7 @@ class SyncApiTests(ApiTestCase):
                         "event_type": "completed",
                         "mode": "focus",
                         "template_label": "Classic",
+                        "tag": "Deep Work",
                         "session_count": 1,
                         "duration_seconds": 1500,
                         "client_id": "sync-1",
@@ -247,11 +297,47 @@ class SyncApiTests(ApiTestCase):
         profile = UserProfile.objects.get(user=self.user)
         self.assertEqual(profile.focus_minutes, 30)
         self.assertEqual(profile.theme, "system")
+        self.assertEqual(profile.active_tag, "Deep Work")
         self.assertTrue(Template.objects.filter(user=self.user, label="Side Project").exists())
         self.assertEqual(SessionEvent.objects.filter(user=self.user).count(), 1)
+        event = SessionEvent.objects.get(user=self.user, client_id="sync-1")
+        self.assertEqual(event.tag, "Deep Work")
+        self.assertEqual(response.data["profile"]["active_tag"], "Deep Work")
+        synced = next(s for s in response.data["sessions"] if s["client_id"] == "sync-1")
+        self.assertEqual(synced["tag"], "Deep Work")
         self.assertIn("profile", response.data)
         self.assertIn("templates", response.data)
         self.assertIn("sessions", response.data)
+
+    def test_sync_defaults_missing_tag_fields_to_null(self):
+        response = self.client.post(
+            reverse("sync"),
+            {
+                "profile": {
+                    "focus_minutes": 30,
+                },
+                "sessions": [
+                    {
+                        "event_type": "completed",
+                        "mode": "longBreak",
+                        "template_label": "Classic",
+                        "session_count": 4,
+                        "duration_seconds": 900,
+                        "client_id": "sync-no-tag",
+                        "occurred_at": "2026-06-22T10:00:00Z",
+                    }
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertIsNone(profile.active_tag)
+        event = SessionEvent.objects.get(user=self.user, client_id="sync-no-tag")
+        self.assertIsNone(event.tag)
+        synced = next(s for s in response.data["sessions"] if s["client_id"] == "sync-no-tag")
+        self.assertIsNone(synced["tag"])
 
     def test_sync_dedups_sessions_by_client_id(self):
         payload = {

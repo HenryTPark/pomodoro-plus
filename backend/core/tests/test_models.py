@@ -26,6 +26,7 @@ class UserProfileModelTests(TestCase):
         self.assertEqual(profile.long_break_minutes, DEFAULT_PROFILE["long_break"])
         self.assertEqual(profile.cycle, DEFAULT_PROFILE["cycle"])
         self.assertEqual(profile.active_template_label, DEFAULT_ACTIVE_TEMPLATE_LABEL)
+        self.assertIsNone(profile.active_tag)
         self.assertEqual(profile.theme, UserProfile.Theme.DARK)
         self.assertTrue(profile.sound_enabled)
 
@@ -186,3 +187,20 @@ class SessionEventModelTests(TestCase):
         self.assertEqual(event.paused_seconds, 0)
         self.assertIsNone(event.started_at)
         self.assertIsNone(event.template_snapshot)
+        self.assertIsNone(event.tag)
+
+    def test_tag_can_be_set(self):
+        event = SessionEvent.objects.create(
+            user=self.user,
+            event_type=SessionEvent.EventType.COMPLETED,
+            mode=SessionEvent.Mode.FOCUS,
+            template_label="Classic",
+            tag="Deep Work",
+            session_count=1,
+            duration_seconds=1500,
+            client_id="tagged-1",
+            occurred_at=datetime(2026, 6, 22, 10, 0, tzinfo=dt_timezone.utc),
+        )
+
+        event.refresh_from_db()
+        self.assertEqual(event.tag, "Deep Work")
