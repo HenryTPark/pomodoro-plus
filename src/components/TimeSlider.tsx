@@ -17,7 +17,7 @@ interface TimeSliderProps {
 export default function TimeSlider({
   value,
   min = 1,
-  max = 60,
+  max = 120,
   step = 1,
   label,
   onChange,
