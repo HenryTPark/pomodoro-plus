@@ -14,6 +14,17 @@ export interface Templates {
 }
 
 export const MAX_TEMPLATES = 10;
+export const MAX_TAG_LENGTH = 50;
+
+/** Trim whitespace; empty → null; cap length; preserve case. */
+export function normalizeTag(value: string | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const trimmed = value.trim().slice(0, MAX_TAG_LENGTH);
+  return trimmed || null;
+}
 
 interface SettingsState {
   focusMinutes: number;
@@ -22,6 +33,8 @@ interface SettingsState {
   cycle: number;
   templates: Templates;
   templateLabel: string;
+  /** Sticky tag stamped onto every logged segment until changed or cleared. */
+  activeTag: string | null;
 
   setFocusMinutes: (minutes: number) => void;
   setBreakMinutes: (minutes: number) => void;
@@ -31,6 +44,7 @@ interface SettingsState {
   changeTemplate: (template: Template) => void;
   setTemplates: (templates: Templates) => void;
   setTemplateLabel: (label: string) => void;
+  setActiveTag: (tag: string | null) => void;
 
   addTemplate: (label: string, template: Template) => void;
   updateTemplate: (label: string, template: Template) => void;
@@ -78,6 +92,7 @@ type PersistedSettings = Pick<
   | 'cycle'
   | 'templates'
   | 'templateLabel'
+  | 'activeTag'
 >;
 
 function normalizeSettings(persisted: Partial<PersistedSettings>): PersistedSettings {
@@ -100,6 +115,7 @@ function normalizeSettings(persisted: Partial<PersistedSettings>): PersistedSett
     cycle: persisted.cycle ?? activeTemplate.cycle,
     templates,
     templateLabel,
+    activeTag: normalizeTag(persisted.activeTag),
   };
 }
 
@@ -112,6 +128,7 @@ export const useSettingsStore = create<SettingsState>()(
       cycle: 4,
       templates: defaultTemplates,
       templateLabel: 'Classic',
+      activeTag: null,
 
       setFocusMinutes: (minutes) => set({ focusMinutes: minutes }),
       setBreakMinutes: (minutes) => set({ breakMinutes: minutes }),
@@ -128,6 +145,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       setTemplates: (templates) => set({ templates }),
       setTemplateLabel: (label) => set({ templateLabel: label }),
+      setActiveTag: (tag) => set({ activeTag: normalizeTag(tag) }),
 
       addTemplate: (label, template) =>
         set((state) => ({
@@ -162,6 +180,7 @@ export const useSettingsStore = create<SettingsState>()(
         cycle: state.cycle,
         templates: state.templates,
         templateLabel: state.templateLabel,
+        activeTag: state.activeTag,
       }),
       merge: (persistedState, currentState) => ({
         ...currentState,

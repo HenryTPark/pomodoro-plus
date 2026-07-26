@@ -79,6 +79,7 @@ export default function Timer() {
       logSession({
         mode: timer.mode,
         templateLabel: settings.templateLabel,
+        tag: settings.activeTag,
         sessionCount: timer.count,
         outcome,
         durationSeconds,

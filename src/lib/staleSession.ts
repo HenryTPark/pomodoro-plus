@@ -81,6 +81,7 @@ export function finalizeStaleSessionIfNeeded(now = Date.now()): boolean {
   useSessionHistoryStore.getState().logSession({
     mode,
     templateLabel: settings.templateLabel,
+    tag: settings.activeTag,
     sessionCount: count,
     outcome: 'stopped',
     durationSeconds: elapsedSeconds,

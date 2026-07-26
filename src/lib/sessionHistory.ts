@@ -11,6 +11,8 @@ export interface SessionRecord {
   id: string;
   mode: TimerMode;
   templateLabel: string;
+  /** Snapshot of sticky activeTag at log time (all modes); null if untagged. */
+  tag: string | null;
   sessionCount: number;
   outcome: 'completed' | 'skipped' | 'stopped';
   durationSeconds: number;
@@ -136,6 +138,7 @@ export function aggregateLegacyEvents(input: {
       id: event.id,
       mode: event.mode,
       templateLabel: event.templateLabel,
+      tag: null,
       sessionCount: event.sessionCount,
       outcome: event.outcome,
       durationSeconds: event.durationSeconds,
