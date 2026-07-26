@@ -24,6 +24,20 @@ export interface SessionRecord {
   templateSnapshot: TemplateSnapshot | null;
 }
 
+/** Format elapsed seconds as `45s`, `23m`, or `1h 5m`. */
+export function formatDuration(seconds: number): string {
+  const rounded = Math.max(0, Math.round(seconds));
+  if (rounded < 60) return `${rounded}s`;
+
+  const totalMinutes = Math.floor(rounded / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+}
+
 export interface LegacyCompletedEvent {
   id: string;
   mode: TimerMode;
