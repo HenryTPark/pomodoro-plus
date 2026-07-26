@@ -69,6 +69,10 @@ function formatPrimaryLine(session: SessionRecord) {
 function formatSecondaryLine(session: SessionRecord) {
   const parts = [session.templateLabel];
 
+  if (session.tag) {
+    parts.push(session.tag);
+  }
+
   if (session.extensionCount > 0) {
     parts.push(
       `Extended ${session.extensionCount}× (+${session.minutesExtended} min)`,
@@ -90,6 +94,7 @@ export default function History() {
   const [extended, setExtended] = useState<ExtendedFilter>("all");
   const [mode, setMode] = useState<ModeFilter>("all");
   const [template, setTemplate] = useState<string>("all");
+  const [tag, setTag] = useState<string>("all");
   const [range, setRange] = useState<RangeFilter>("all");
 
   const templateOptions = useMemo(() => {
@@ -98,6 +103,14 @@ export default function History() {
       labels.add(session.templateLabel);
     }
     return Array.from(labels).sort((a, b) => a.localeCompare(b));
+  }, [sessions]);
+
+  const tagOptions = useMemo(() => {
+    const tags = new Set<string>();
+    for (const session of sessions) {
+      if (session.tag) tags.add(session.tag);
+    }
+    return Array.from(tags).sort((a, b) => a.localeCompare(b));
   }, [sessions]);
 
   const entries = useMemo(() => {
@@ -110,14 +123,15 @@ export default function History() {
       if (extended === "extended" && session.extensionCount === 0) return false;
       if (mode !== "all" && session.mode !== mode) return false;
       if (template !== "all" && session.templateLabel !== template) return false;
+      if (tag !== "all" && session.tag !== tag) return false;
       if (query) {
         const haystack =
-          `${session.templateLabel} ${modeLabels[session.mode]} ${session.outcome}`.toLowerCase();
+          `${session.templateLabel} ${session.tag ?? ""} ${modeLabels[session.mode]} ${session.outcome}`.toLowerCase();
         if (!haystack.includes(query)) return false;
       }
       return true;
     });
-  }, [sessions, range, outcome, extended, mode, template, search]);
+  }, [sessions, range, outcome, extended, mode, template, tag, search]);
 
   const hasHistory = sessions.length > 0;
   const hasResults = entries.length > 0;
@@ -150,7 +164,7 @@ export default function History() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search template or mode..."
+                placeholder="Search template, tag, or mode..."
                 aria-label="Search sessions"
                 className="h-8 w-full sm:w-56"
               />
@@ -207,6 +221,20 @@ export default function History() {
                 <SelectContent>
                   <SelectItem value="all">All templates</SelectItem>
                   {templateOptions.map((label) => (
+                    <SelectItem key={label} value={label}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={tag} onValueChange={setTag}>
+                <SelectTrigger className="w-full cursor-pointer sm:w-44" size="sm">
+                  <SelectValue placeholder="Tag" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All tags</SelectItem>
+                  {tagOptions.map((label) => (
                     <SelectItem key={label} value={label}>
                       {label}
                     </SelectItem>
