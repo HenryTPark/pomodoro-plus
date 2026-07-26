@@ -162,7 +162,11 @@ export const authApi = {
 
 export type ApiTheme = "light" | "dark" | "system";
 export type ApiTimerMode = "focus" | "break" | "longBreak";
-export type ApiSessionEventType = "completed" | "skipped" | "extended";
+export type ApiSessionEventType =
+  | "completed"
+  | "skipped"
+  | "extended"
+  | "stopped";
 
 export interface ApiUserProfile {
   focus_minutes: number;
@@ -184,6 +188,14 @@ export interface ApiTemplate {
   is_builtin: boolean;
 }
 
+/** Point-in-time template config; optional on older payloads. */
+export interface ApiTemplateSnapshot {
+  focus_minutes: number;
+  break_minutes: number;
+  long_break_minutes: number;
+  cycle: number;
+}
+
 export interface ApiSessionEvent {
   id: number;
   event_type: ApiSessionEventType;
@@ -192,6 +204,14 @@ export interface ApiSessionEvent {
   session_count: number;
   duration_seconds: number | null;
   minutes_added: number | null;
+  /** Present on unified terminal events; omitted on legacy rows. */
+  extension_count?: number;
+  minutes_extended?: number;
+  planned_seconds?: number | null;
+  pause_count?: number;
+  paused_seconds?: number;
+  started_at?: string | null;
+  template_snapshot?: ApiTemplateSnapshot | null;
   client_id: string;
   occurred_at: string;
 }
@@ -220,6 +240,13 @@ export interface SyncSessionInput {
   session_count: number;
   duration_seconds?: number | null;
   minutes_added?: number | null;
+  extension_count?: number;
+  minutes_extended?: number;
+  planned_seconds?: number | null;
+  pause_count?: number;
+  paused_seconds?: number;
+  started_at?: string | null;
+  template_snapshot?: ApiTemplateSnapshot | null;
   client_id: string;
   occurred_at: string;
 }
@@ -275,7 +302,7 @@ export const templatesApi = {
 };
 
 export const sessionsApi = {
-  create: (session: Omit<ApiSessionEvent, "id">) =>
+  create: (session: SyncSessionInput) =>
     apiRequest<ApiSessionEvent>("/api/sessions/", {
       method: "POST",
       body: JSON.stringify(session),
