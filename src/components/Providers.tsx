@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { bootstrapSync, setupWriteThrough, teardownSync } from '@/lib/sync';
+import { finalizeStaleSessionIfNeeded } from '@/lib/staleSession';
 
 const stores = [
   useSettingsStore,
@@ -25,7 +26,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void Promise.all(stores.map((store) => store.persist.rehydrate())).then(
-      () => setHydrated(true),
+      () => {
+        finalizeStaleSessionIfNeeded();
+        setHydrated(true);
+      },
     );
   }, []);
 
