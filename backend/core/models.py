@@ -26,6 +26,7 @@ class UserProfile(models.Model):
         max_length=100,
         default=DEFAULT_ACTIVE_TEMPLATE_LABEL,
     )
+    active_tag = models.CharField(max_length=50, null=True, blank=True)
     theme = models.CharField(max_length=10, choices=Theme.choices, default=Theme.DARK)
     sound_enabled = models.BooleanField(default=True)
 
@@ -76,6 +77,7 @@ class SessionEvent(models.Model):
     event_type = models.CharField(max_length=10, choices=EventType.choices)
     mode = models.CharField(max_length=10, choices=Mode.choices)
     template_label = models.CharField(max_length=100)
+    tag = models.CharField(max_length=50, null=True, blank=True)
     session_count = models.PositiveSmallIntegerField()
     duration_seconds = models.PositiveIntegerField(null=True, blank=True)
     minutes_added = models.PositiveSmallIntegerField(null=True, blank=True)

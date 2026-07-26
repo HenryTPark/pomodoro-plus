@@ -94,6 +94,7 @@ function sessionRecordToSyncInput(session: SessionRecord): NonNullable<
     event_type: session.outcome,
     mode: session.mode,
     template_label: session.templateLabel,
+    tag: session.tag,
     session_count: session.sessionCount,
     duration_seconds: session.durationSeconds,
     extension_count: session.extensionCount,
@@ -133,6 +134,7 @@ function buildLocalSnapshot(): SyncInput {
       long_break_minutes: settings.longBreakMinutes,
       cycle: settings.cycle,
       active_template_label: settings.templateLabel,
+      active_tag: settings.activeTag,
       theme: preferences.theme,
       sound_enabled: preferences.soundEnabled,
     },
@@ -166,6 +168,7 @@ function mapUnifiedSession(session: ApiSessionEvent): SessionRecord | null {
     id: session.client_id,
     mode: session.mode,
     templateLabel: session.template_label,
+    tag: session.tag ?? null,
     sessionCount: session.session_count,
     outcome: session.event_type,
     durationSeconds: session.duration_seconds,
@@ -270,6 +273,7 @@ function hydrateFromSyncOutput(data: SyncOutput): void {
       longBreakMinutes: profile.long_break_minutes,
       cycle: profile.cycle,
       templateLabel: profile.active_template_label,
+      activeTag: profile.active_tag ?? null,
       templates,
     });
 
@@ -301,6 +305,7 @@ function buildProfilePayload(): ApiUserProfile {
     long_break_minutes: settings.longBreakMinutes,
     cycle: settings.cycle,
     active_template_label: settings.templateLabel,
+    active_tag: settings.activeTag,
     theme: preferences.theme,
     sound_enabled: preferences.soundEnabled,
   };
@@ -428,7 +433,8 @@ function profileFieldsChanged(
     state.breakMinutes !== previous.breakMinutes ||
     state.longBreakMinutes !== previous.longBreakMinutes ||
     state.cycle !== previous.cycle ||
-    state.templateLabel !== previous.templateLabel
+    state.templateLabel !== previous.templateLabel ||
+    state.activeTag !== previous.activeTag
   );
 }
 

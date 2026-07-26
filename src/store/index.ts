@@ -7,6 +7,8 @@ export {
   useSettingsStore,
   defaultTemplates,
   MAX_TEMPLATES,
+  MAX_TAG_LENGTH,
+  normalizeTag,
   type Template,
   type Templates,
 } from './settingsStore';

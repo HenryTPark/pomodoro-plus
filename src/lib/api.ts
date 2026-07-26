@@ -174,6 +174,7 @@ export interface ApiUserProfile {
   long_break_minutes: number;
   cycle: number;
   active_template_label: string;
+  active_tag: string | null;
   theme: ApiTheme;
   sound_enabled: boolean;
 }
@@ -201,6 +202,8 @@ export interface ApiSessionEvent {
   event_type: ApiSessionEventType;
   mode: ApiTimerMode;
   template_label: string;
+  /** Present on newer payloads; omitted/null on legacy untagged rows. */
+  tag?: string | null;
   session_count: number;
   duration_seconds: number | null;
   minutes_added: number | null;
@@ -229,6 +232,7 @@ export interface SyncProfileInput {
   long_break_minutes?: number;
   cycle?: number;
   active_template_label?: string;
+  active_tag?: string | null;
   theme?: ApiTheme;
   sound_enabled?: boolean;
 }
@@ -237,6 +241,7 @@ export interface SyncSessionInput {
   event_type: ApiSessionEventType;
   mode: ApiTimerMode;
   template_label: string;
+  tag?: string | null;
   session_count: number;
   duration_seconds?: number | null;
   minutes_added?: number | null;

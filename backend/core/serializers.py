@@ -4,6 +4,14 @@ from rest_framework import serializers
 from core.models import SessionEvent, Template, UserProfile
 
 
+def normalize_tag(value: str | None) -> str | None:
+    """Trim whitespace; empty → null; preserve case; max length enforced by field."""
+    if value is None:
+        return None
+    trimmed = value.strip()
+    return trimmed or None
+
+
 class UserSerializer(UserDetailsSerializer):
     """Session-auth user payload returned by login and /api/auth/user/."""
 
@@ -13,6 +21,10 @@ class UserSerializer(UserDetailsSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    active_tag = serializers.CharField(
+        max_length=50, required=False, allow_null=True, allow_blank=True
+    )
+
     class Meta:
         model = UserProfile
         fields = (
@@ -21,9 +33,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "long_break_minutes",
             "cycle",
             "active_template_label",
+            "active_tag",
             "theme",
             "sound_enabled",
         )
+
+    def validate_active_tag(self, value: str | None) -> str | None:
+        return normalize_tag(value)
 
 
 class TemplateSerializer(serializers.ModelSerializer):
@@ -47,6 +63,10 @@ class TemplateSerializer(serializers.ModelSerializer):
 
 
 class SessionEventSerializer(serializers.ModelSerializer):
+    tag = serializers.CharField(
+        max_length=50, required=False, allow_null=True, allow_blank=True
+    )
+
     class Meta:
         model = SessionEvent
         fields = (
@@ -54,6 +74,7 @@ class SessionEventSerializer(serializers.ModelSerializer):
             "event_type",
             "mode",
             "template_label",
+            "tag",
             "session_count",
             "duration_seconds",
             "minutes_added",
@@ -68,6 +89,9 @@ class SessionEventSerializer(serializers.ModelSerializer):
             "occurred_at",
         )
         read_only_fields = ("id",)
+
+    def validate_tag(self, value: str | None) -> str | None:
+        return normalize_tag(value)
 
     def validate(self, attrs: dict) -> dict:
         event_type = attrs.get("event_type", getattr(self.instance, "event_type", None))
@@ -106,14 +130,23 @@ class SyncProfileInputSerializer(serializers.Serializer):
     long_break_minutes = serializers.IntegerField(min_value=1, required=False)
     cycle = serializers.IntegerField(min_value=1, required=False)
     active_template_label = serializers.CharField(max_length=100, required=False)
+    active_tag = serializers.CharField(
+        max_length=50, required=False, allow_null=True, allow_blank=True
+    )
     theme = serializers.ChoiceField(choices=UserProfile.Theme.choices, required=False)
     sound_enabled = serializers.BooleanField(required=False)
+
+    def validate_active_tag(self, value: str | None) -> str | None:
+        return normalize_tag(value)
 
 
 class SyncSessionInputSerializer(serializers.Serializer):
     event_type = serializers.ChoiceField(choices=SessionEvent.EventType.choices)
     mode = serializers.ChoiceField(choices=SessionEvent.Mode.choices)
     template_label = serializers.CharField(max_length=100)
+    tag = serializers.CharField(
+        max_length=50, required=False, allow_null=True, allow_blank=True
+    )
     session_count = serializers.IntegerField(min_value=0)
     duration_seconds = serializers.IntegerField(min_value=0, required=False, allow_null=True)
     minutes_added = serializers.IntegerField(min_value=1, required=False, allow_null=True)
@@ -126,6 +159,9 @@ class SyncSessionInputSerializer(serializers.Serializer):
     template_snapshot = serializers.JSONField(required=False, allow_null=True)
     client_id = serializers.CharField(max_length=100)
     occurred_at = serializers.DateTimeField()
+
+    def validate_tag(self, value: str | None) -> str | None:
+        return normalize_tag(value)
 
 
 class SyncInputSerializer(serializers.Serializer):

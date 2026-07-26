@@ -40,6 +40,14 @@ function trimHistory(items: SessionRecord[]) {
   return items.slice(0, MAX_HISTORY);
 }
 
+/** Fill missing fields on older persisted rows (e.g. pre-tag history). */
+function normalizeSessions(sessions: SessionRecord[]): SessionRecord[] {
+  return sessions.map((session) => ({
+    ...session,
+    tag: session.tag ?? null,
+  }));
+}
+
 function migrateSessionHistory(
   persistedState: unknown,
   version: number,
@@ -47,15 +55,17 @@ function migrateSessionHistory(
   const state = (persistedState ?? {}) as LegacyPersistedSessionHistory;
 
   if (version >= 1 && Array.isArray(state.sessions)) {
-    return { sessions: state.sessions };
+    return { sessions: normalizeSessions(state.sessions) };
   }
 
   return {
-    sessions: aggregateLegacyEvents({
-      completed: state.completedSessions ?? [],
-      skipped: state.skippedSessions ?? [],
-      extended: state.extendedSessions ?? [],
-    }),
+    sessions: normalizeSessions(
+      aggregateLegacyEvents({
+        completed: state.completedSessions ?? [],
+        skipped: state.skippedSessions ?? [],
+        extended: state.extendedSessions ?? [],
+      }),
+    ),
   };
 }
 
