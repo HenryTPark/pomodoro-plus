@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useSessionHistoryStore, type TimerMode } from "@/store";
+import {
+  useSessionHistoryStore,
+  type SessionRecord,
+  type TimerMode,
+} from "@/store";
+import { formatDuration } from "@/lib/sessionHistory";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,19 +25,10 @@ import HistoryDashboard, {
 const cardClassName =
   "rounded-2xl border border-border bg-card/70 dark:shadow-2xl dark:shadow-slate-950/30 backdrop-blur-xl";
 
-type HistoryEventType = "completed" | "skipped" | "extended";
-
-type EventTypeFilter = "all" | HistoryEventType;
+type SessionOutcome = SessionRecord["outcome"];
+type OutcomeFilter = "all" | SessionOutcome;
+type ExtendedFilter = "all" | "extended";
 type ModeFilter = "all" | TimerMode;
-
-interface HistoryEntry {
-  id: string;
-  type: HistoryEventType;
-  mode: TimerMode;
-  templateLabel: string;
-  timestamp: number;
-  minutesAdded?: number;
-}
 
 const modeLabels: Record<TimerMode, string> = {
   focus: "Focus",
@@ -40,10 +36,13 @@ const modeLabels: Record<TimerMode, string> = {
   longBreak: "Long Break",
 };
 
-const eventStyles: Record<HistoryEventType, { label: string; className: string }> = {
+const outcomeStyles: Record<
+  SessionOutcome,
+  { label: string; className: string }
+> = {
   completed: { label: "Completed", className: "text-timer-break" },
   skipped: { label: "Skipped", className: "text-muted-foreground" },
-  extended: { label: "Extended", className: "text-timer-long-break" },
+  stopped: { label: "Stopped", className: "text-timer-long-break" },
 };
 
 function formatTimestamp(timestamp: number) {
@@ -55,72 +54,72 @@ function formatTimestamp(timestamp: number) {
   });
 }
 
+function formatPrimaryLine(session: SessionRecord) {
+  const mode = modeLabels[session.mode];
+  const duration = formatDuration(session.durationSeconds);
+
+  // plannedSeconds === 0 means unknown (legacy); do not treat as a real target
+  if (session.plannedSeconds > 0) {
+    return `${mode} · ${duration} of ${formatDuration(session.plannedSeconds)}`;
+  }
+
+  return `${mode} · ${duration}`;
+}
+
+function formatSecondaryLine(session: SessionRecord) {
+  const parts = [session.templateLabel];
+
+  if (session.extensionCount > 0) {
+    parts.push(
+      `Extended ${session.extensionCount}× (+${session.minutesExtended} min)`,
+    );
+  }
+
+  if (session.pauseCount > 0) {
+    parts.push(`Paused ${session.pauseCount}×`);
+  }
+
+  return parts.join(" · ");
+}
+
 export default function History() {
-  const { completedSessions, skippedSessions, extendedSessions } =
-    useSessionHistoryStore();
+  const sessions = useSessionHistoryStore((state) => state.sessions);
 
   const [search, setSearch] = useState("");
-  const [eventType, setEventType] = useState<EventTypeFilter>("all");
+  const [outcome, setOutcome] = useState<OutcomeFilter>("all");
+  const [extended, setExtended] = useState<ExtendedFilter>("all");
   const [mode, setMode] = useState<ModeFilter>("all");
   const [template, setTemplate] = useState<string>("all");
   const [range, setRange] = useState<RangeFilter>("all");
 
-  const allEntries = useMemo<HistoryEntry[]>(() => {
-    const merged: HistoryEntry[] = [
-      ...completedSessions.map((session) => ({
-        id: session.id,
-        type: "completed" as const,
-        mode: session.mode,
-        templateLabel: session.templateLabel,
-        timestamp: session.timestamp,
-      })),
-      ...skippedSessions.map((session) => ({
-        id: session.id,
-        type: "skipped" as const,
-        mode: session.mode,
-        templateLabel: session.templateLabel,
-        timestamp: session.timestamp,
-      })),
-      ...extendedSessions.map((session) => ({
-        id: session.id,
-        type: "extended" as const,
-        mode: session.mode,
-        templateLabel: session.templateLabel,
-        timestamp: session.timestamp,
-        minutesAdded: session.minutesAdded,
-      })),
-    ];
-
-    return merged.sort((a, b) => b.timestamp - a.timestamp);
-  }, [completedSessions, skippedSessions, extendedSessions]);
-
   const templateOptions = useMemo(() => {
     const labels = new Set<string>();
-    for (const entry of allEntries) {
-      labels.add(entry.templateLabel);
+    for (const session of sessions) {
+      labels.add(session.templateLabel);
     }
     return Array.from(labels).sort((a, b) => a.localeCompare(b));
-  }, [allEntries]);
+  }, [sessions]);
 
-  const entries = useMemo<HistoryEntry[]>(() => {
+  const entries = useMemo(() => {
     const cutoff = getRangeCutoff(range);
     const query = search.trim().toLowerCase();
 
-    return allEntries.filter((entry) => {
-      if (entry.timestamp < cutoff) return false;
-      if (eventType !== "all" && entry.type !== eventType) return false;
-      if (mode !== "all" && entry.mode !== mode) return false;
-      if (template !== "all" && entry.templateLabel !== template) return false;
+    return sessions.filter((session) => {
+      if (session.timestamp < cutoff) return false;
+      if (outcome !== "all" && session.outcome !== outcome) return false;
+      if (extended === "extended" && session.extensionCount === 0) return false;
+      if (mode !== "all" && session.mode !== mode) return false;
+      if (template !== "all" && session.templateLabel !== template) return false;
       if (query) {
         const haystack =
-          `${entry.templateLabel} ${modeLabels[entry.mode]}`.toLowerCase();
+          `${session.templateLabel} ${modeLabels[session.mode]} ${session.outcome}`.toLowerCase();
         if (!haystack.includes(query)) return false;
       }
       return true;
     });
-  }, [allEntries, range, eventType, mode, template, search]);
+  }, [sessions, range, outcome, extended, mode, template, search]);
 
-  const hasHistory = allEntries.length > 0;
+  const hasHistory = sessions.length > 0;
   const hasResults = entries.length > 0;
 
   return (
@@ -157,19 +156,32 @@ export default function History() {
               />
 
               <Select
-                value={eventType}
+                value={outcome}
+                onValueChange={(value) => setOutcome(value as OutcomeFilter)}
+              >
+                <SelectTrigger className="w-full cursor-pointer sm:w-36" size="sm">
+                  <SelectValue placeholder="Outcome" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All outcomes</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="skipped">Skipped</SelectItem>
+                  <SelectItem value="stopped">Stopped</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={extended}
                 onValueChange={(value) =>
-                  setEventType(value as EventTypeFilter)
+                  setExtended(value as ExtendedFilter)
                 }
               >
                 <SelectTrigger className="w-full cursor-pointer sm:w-36" size="sm">
-                  <SelectValue placeholder="Event" />
+                  <SelectValue placeholder="Extensions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All events</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="skipped">Skipped</SelectItem>
-                  <SelectItem value="extended">Extended</SelectItem>
+                  <SelectItem value="all">Any extensions</SelectItem>
+                  <SelectItem value="extended">Extended only</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -239,34 +251,30 @@ export default function History() {
             </div>
           ) : (
             <ul className="mt-[clamp(0.5rem,1.5vh,1rem)] divide-y divide-border pr-2 sm:pr-3">
-              {entries.map((entry) => {
-                const event = eventStyles[entry.type];
+              {entries.map((session) => {
+                const style = outcomeStyles[session.outcome];
                 return (
                   <li
-                    key={entry.id}
+                    key={session.id}
                     className="flex items-center justify-between gap-3 py-[clamp(0.5rem,1.2vh,0.875rem)]"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span
-                        className={`min-w-[5.5rem] shrink-0 text-[clamp(0.75rem,1.5vh,0.9rem)] font-semibold uppercase tracking-wide ${event.className}`}
+                        className={`min-w-22 shrink-0 text-[clamp(0.75rem,1.5vh,0.9rem)] font-semibold uppercase tracking-wide ${style.className}`}
                       >
-                        {event.label}
+                        {style.label}
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-[clamp(0.9rem,1.8vh,1.05rem)] font-medium text-foreground">
-                          {modeLabels[entry.mode]}
-                          {entry.type === "extended" &&
-                          entry.minutesAdded !== undefined
-                            ? ` · +${entry.minutesAdded} min`
-                            : ""}
+                          {formatPrimaryLine(session)}
                         </p>
                         <p className="truncate text-[clamp(0.8rem,1.5vh,0.95rem)] text-muted-foreground">
-                          {entry.templateLabel}
+                          {formatSecondaryLine(session)}
                         </p>
                       </div>
                     </div>
                     <span className="shrink-0 text-[clamp(0.8rem,1.5vh,0.95rem)] text-muted-foreground">
-                      {formatTimestamp(entry.timestamp)}
+                      {formatTimestamp(session.timestamp)}
                     </span>
                   </li>
                 );

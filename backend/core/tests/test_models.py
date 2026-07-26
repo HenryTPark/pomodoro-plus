@@ -133,3 +133,56 @@ class SessionEventModelTests(TestCase):
         )
 
         self.assertEqual(SessionEvent.objects.filter(client_id="shared-client").count(), 2)
+
+    def test_stopped_event_with_unified_fields(self):
+        event = SessionEvent.objects.create(
+            user=self.user,
+            event_type=SessionEvent.EventType.STOPPED,
+            mode=SessionEvent.Mode.FOCUS,
+            template_label="Classic",
+            session_count=1,
+            duration_seconds=420,
+            extension_count=2,
+            minutes_extended=10,
+            planned_seconds=1500,
+            pause_count=1,
+            paused_seconds=30,
+            started_at=datetime(2026, 6, 22, 9, 50, tzinfo=dt_timezone.utc),
+            template_snapshot={
+                "focusMinutes": 25,
+                "breakMinutes": 5,
+                "longBreakMinutes": 15,
+                "cycle": 4,
+            },
+            client_id="stopped-1",
+            occurred_at=datetime(2026, 6, 22, 10, 0, tzinfo=dt_timezone.utc),
+        )
+
+        event.refresh_from_db()
+        self.assertEqual(event.event_type, SessionEvent.EventType.STOPPED)
+        self.assertEqual(event.extension_count, 2)
+        self.assertEqual(event.minutes_extended, 10)
+        self.assertEqual(event.planned_seconds, 1500)
+        self.assertEqual(event.pause_count, 1)
+        self.assertEqual(event.paused_seconds, 30)
+        self.assertEqual(event.started_at, datetime(2026, 6, 22, 9, 50, tzinfo=dt_timezone.utc))
+        self.assertEqual(
+            event.template_snapshot,
+            {
+                "focusMinutes": 25,
+                "breakMinutes": 5,
+                "longBreakMinutes": 15,
+                "cycle": 4,
+            },
+        )
+
+    def test_unified_fields_default_to_zero_or_null(self):
+        event = self._create_event("defaults-1")
+
+        self.assertEqual(event.extension_count, 0)
+        self.assertEqual(event.minutes_extended, 0)
+        self.assertIsNone(event.planned_seconds)
+        self.assertEqual(event.pause_count, 0)
+        self.assertEqual(event.paused_seconds, 0)
+        self.assertIsNone(event.started_at)
+        self.assertIsNone(event.template_snapshot)

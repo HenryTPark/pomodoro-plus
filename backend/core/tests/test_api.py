@@ -116,6 +116,72 @@ class SessionApiTests(ApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(SessionEvent.objects.filter(user=self.user).count(), 1)
 
+    def test_create_stopped_session_with_unified_fields(self):
+        response = self.client.post(
+            reverse("session-list"),
+            {
+                "event_type": "stopped",
+                "mode": "focus",
+                "template_label": "Classic",
+                "session_count": 1,
+                "duration_seconds": 420,
+                "extension_count": 2,
+                "minutes_extended": 10,
+                "planned_seconds": 1500,
+                "pause_count": 1,
+                "paused_seconds": 30,
+                "started_at": "2026-06-22T09:50:00Z",
+                "template_snapshot": {
+                    "focusMinutes": 25,
+                    "breakMinutes": 5,
+                    "longBreakMinutes": 15,
+                    "cycle": 4,
+                },
+                "client_id": "stopped-1",
+                "occurred_at": "2026-06-22T10:00:00Z",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        event = SessionEvent.objects.get(user=self.user, client_id="stopped-1")
+        self.assertEqual(event.event_type, SessionEvent.EventType.STOPPED)
+        self.assertEqual(event.extension_count, 2)
+        self.assertEqual(event.minutes_extended, 10)
+        self.assertEqual(event.planned_seconds, 1500)
+        self.assertEqual(event.pause_count, 1)
+        self.assertEqual(event.paused_seconds, 30)
+        self.assertEqual(event.started_at, datetime(2026, 6, 22, 9, 50, tzinfo=dt_timezone.utc))
+        self.assertEqual(
+            event.template_snapshot,
+            {
+                "focusMinutes": 25,
+                "breakMinutes": 5,
+                "longBreakMinutes": 15,
+                "cycle": 4,
+            },
+        )
+        self.assertEqual(response.data["event_type"], "stopped")
+        self.assertEqual(response.data["extension_count"], 2)
+        self.assertEqual(response.data["planned_seconds"], 1500)
+
+    def test_stopped_session_requires_duration_seconds(self):
+        response = self.client.post(
+            reverse("session-list"),
+            {
+                "event_type": "stopped",
+                "mode": "focus",
+                "template_label": "Classic",
+                "session_count": 1,
+                "client_id": "stopped-no-duration",
+                "occurred_at": "2026-06-22T10:00:00Z",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("duration_seconds", response.data)
+
     def test_filter_sessions_by_event_type(self):
         SessionEvent.objects.create(
             user=self.user,
@@ -206,6 +272,60 @@ class SyncApiTests(ApiTestCase):
         self.client.post(reverse("sync"), payload, format="json")
 
         self.assertEqual(SessionEvent.objects.filter(user=self.user, client_id="dup-1").count(), 1)
+
+    def test_sync_creates_stopped_session_with_unified_fields(self):
+        response = self.client.post(
+            reverse("sync"),
+            {
+                "sessions": [
+                    {
+                        "event_type": "stopped",
+                        "mode": "focus",
+                        "template_label": "Classic",
+                        "session_count": 1,
+                        "duration_seconds": 420,
+                        "extension_count": 2,
+                        "minutes_extended": 10,
+                        "planned_seconds": 1500,
+                        "pause_count": 1,
+                        "paused_seconds": 30,
+                        "started_at": "2026-06-22T09:50:00Z",
+                        "template_snapshot": {
+                            "focusMinutes": 25,
+                            "breakMinutes": 5,
+                            "longBreakMinutes": 15,
+                            "cycle": 4,
+                        },
+                        "client_id": "sync-stopped-1",
+                        "occurred_at": "2026-06-22T10:00:00Z",
+                    }
+                ]
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        event = SessionEvent.objects.get(user=self.user, client_id="sync-stopped-1")
+        self.assertEqual(event.event_type, SessionEvent.EventType.STOPPED)
+        self.assertEqual(event.extension_count, 2)
+        self.assertEqual(event.minutes_extended, 10)
+        self.assertEqual(event.planned_seconds, 1500)
+        self.assertEqual(event.pause_count, 1)
+        self.assertEqual(event.paused_seconds, 30)
+        self.assertEqual(event.started_at, datetime(2026, 6, 22, 9, 50, tzinfo=dt_timezone.utc))
+        self.assertEqual(
+            event.template_snapshot,
+            {
+                "focusMinutes": 25,
+                "breakMinutes": 5,
+                "longBreakMinutes": 15,
+                "cycle": 4,
+            },
+        )
+        synced = next(s for s in response.data["sessions"] if s["client_id"] == "sync-stopped-1")
+        self.assertEqual(synced["event_type"], "stopped")
+        self.assertEqual(synced["extension_count"], 2)
+        self.assertEqual(synced["paused_seconds"], 30)
 
     def test_sync_keeps_remote_template_on_label_conflict(self):
         classic = Template.objects.get(user=self.user, label="Classic")

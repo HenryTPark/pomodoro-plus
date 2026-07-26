@@ -86,26 +86,13 @@ interface TimedContribution {
 }
 
 export default function HistoryDashboard({ range }: HistoryDashboardProps) {
-  const { completedSessions, skippedSessions } = useSessionHistoryStore();
+  const sessions = useSessionHistoryStore((state) => state.sessions);
 
-  // Real time contributions, grouped per category. Completed and skipped
-  // sessions contribute their actual active (unpaused) duration. Extended
-  // sessions are excluded because their time is already counted within the
-  // session's recorded duration.
   const contributions = useMemo<TimedContribution[]>(() => {
     const cutoff = getRangeCutoff(range);
     const items: TimedContribution[] = [];
 
-    for (const session of completedSessions) {
-      if (session.timestamp < cutoff) continue;
-      items.push({
-        timestamp: session.timestamp,
-        mode: session.mode,
-        minutes: session.durationSeconds / 60,
-      });
-    }
-
-    for (const session of skippedSessions) {
+    for (const session of sessions) {
       if (session.timestamp < cutoff) continue;
       items.push({
         timestamp: session.timestamp,
@@ -115,7 +102,7 @@ export default function HistoryDashboard({ range }: HistoryDashboardProps) {
     }
 
     return items;
-  }, [completedSessions, skippedSessions, range]);
+  }, [sessions, range]);
 
   const categoryMinutes = useMemo(() => {
     const totals: Record<TimerMode, number> = {
@@ -131,18 +118,17 @@ export default function HistoryDashboard({ range }: HistoryDashboardProps) {
 
   const stats = useMemo(() => {
     const cutoff = getRangeCutoff(range);
-    const completedInRange = completedSessions.filter(
-      (session) => session.timestamp >= cutoff,
-    );
-    const skippedInRange = skippedSessions.filter(
-      (session) => session.timestamp >= cutoff,
+    const inRange = sessions.filter((session) => session.timestamp >= cutoff);
+    const completedInRange = inRange.filter(
+      (session) => session.outcome === "completed",
     );
 
     const completedFocus = completedInRange.filter(
       (session) => session.mode === "focus",
     ).length;
 
-    const totalAttempts = completedInRange.length + skippedInRange.length;
+    // All terminal outcomes count as attempts, including stopped sessions.
+    const totalAttempts = inRange.length;
     const completionRate =
       totalAttempts === 0
         ? null
@@ -153,13 +139,19 @@ export default function HistoryDashboard({ range }: HistoryDashboardProps) {
       focusMinutes: categoryMinutes.focus,
       completionRate,
     };
-  }, [completedSessions, skippedSessions, categoryMinutes, range]);
+  }, [sessions, categoryMinutes, range]);
 
   // Streak is an all-time concept, so it intentionally ignores the range.
+  // Only completed focus sessions count (skipped/stopped do not).
   const streak = useMemo(() => {
-    if (completedSessions.length === 0) return 0;
+    const completedFocus = sessions.filter(
+      (session) =>
+        session.outcome === "completed" && session.mode === "focus",
+    );
+    if (completedFocus.length === 0) return 0;
+
     const days = new Set<number>();
-    for (const session of completedSessions) {
+    for (const session of completedFocus) {
       days.add(startOfDay(session.timestamp));
     }
 
@@ -176,7 +168,7 @@ export default function HistoryDashboard({ range }: HistoryDashboardProps) {
       cursor -= DAY_MS;
     }
     return count;
-  }, [completedSessions]);
+  }, [sessions]);
 
   const histogram = useMemo(() => {
     return buildHistogram(range, contributions);

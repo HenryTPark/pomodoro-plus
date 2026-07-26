@@ -4,18 +4,23 @@ import {
   syncApi,
   templatesApi,
   type ApiSessionEvent,
-  type ApiSessionEventType,
+  type ApiTemplateSnapshot,
   type ApiUserProfile,
   type SyncInput,
   type SyncOutput,
 } from "@/lib/api";
 import {
+  aggregateLegacyEvents,
+  type LegacyCompletedEvent,
+  type LegacyExtendedEvent,
+  type LegacySkippedEvent,
+  type SessionRecord,
+  type TemplateSnapshot,
+} from "@/lib/sessionHistory";
+import {
   usePreferencesStore,
   useSessionHistoryStore,
   useSettingsStore,
-  type CompletedSession,
-  type ExtendedSession,
-  type SkippedSession,
   type Template,
   type Templates,
 } from "@/store";
@@ -52,6 +57,60 @@ function templatesEqual(left: Template, right: Template): boolean {
   );
 }
 
+function toApiTemplateSnapshot(
+  snapshot: TemplateSnapshot | null,
+): ApiTemplateSnapshot | null {
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    focus_minutes: snapshot.focusMinutes,
+    break_minutes: snapshot.breakMinutes,
+    long_break_minutes: snapshot.longBreakMinutes,
+    cycle: snapshot.cycle,
+  };
+}
+
+function fromApiTemplateSnapshot(
+  snapshot: ApiTemplateSnapshot | null | undefined,
+): TemplateSnapshot | null {
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    focusMinutes: snapshot.focus_minutes,
+    breakMinutes: snapshot.break_minutes,
+    longBreakMinutes: snapshot.long_break_minutes,
+    cycle: snapshot.cycle,
+  };
+}
+
+function sessionRecordToSyncInput(session: SessionRecord): NonNullable<
+  SyncInput["sessions"]
+>[number] {
+  return {
+    event_type: session.outcome,
+    mode: session.mode,
+    template_label: session.templateLabel,
+    session_count: session.sessionCount,
+    duration_seconds: session.durationSeconds,
+    extension_count: session.extensionCount,
+    minutes_extended: session.minutesExtended,
+    planned_seconds: session.plannedSeconds,
+    pause_count: session.pauseCount,
+    paused_seconds: session.pausedSeconds,
+    started_at:
+      session.startedAt != null
+        ? new Date(session.startedAt).toISOString()
+        : null,
+    template_snapshot: toApiTemplateSnapshot(session.templateSnapshot),
+    client_id: session.id,
+    occurred_at: new Date(session.timestamp).toISOString(),
+  };
+}
+
 function buildLocalSnapshot(): SyncInput {
   const settings = useSettingsStore.getState();
   const preferences = usePreferencesStore.getState();
@@ -67,36 +126,6 @@ function buildLocalSnapshot(): SyncInput {
     };
   }
 
-  const sessions: SyncInput["sessions"] = [
-    ...history.completedSessions.map((session) => ({
-      event_type: "completed" as const,
-      mode: session.mode,
-      template_label: session.templateLabel,
-      session_count: session.sessionCount,
-      duration_seconds: session.durationSeconds,
-      client_id: session.id,
-      occurred_at: new Date(session.timestamp).toISOString(),
-    })),
-    ...history.skippedSessions.map((session) => ({
-      event_type: "skipped" as const,
-      mode: session.mode,
-      template_label: session.templateLabel,
-      session_count: session.sessionCount,
-      duration_seconds: session.durationSeconds,
-      client_id: session.id,
-      occurred_at: new Date(session.timestamp).toISOString(),
-    })),
-    ...history.extendedSessions.map((session) => ({
-      event_type: "extended" as const,
-      mode: session.mode,
-      template_label: session.templateLabel,
-      session_count: session.sessionCount,
-      minutes_added: session.minutesAdded,
-      client_id: session.id,
-      occurred_at: new Date(session.timestamp).toISOString(),
-    })),
-  ];
-
   return {
     profile: {
       focus_minutes: settings.focusMinutes,
@@ -108,21 +137,69 @@ function buildLocalSnapshot(): SyncInput {
       sound_enabled: preferences.soundEnabled,
     },
     templates,
-    sessions,
+    sessions: history.sessions.map(sessionRecordToSyncInput),
+  };
+}
+
+/** Unified terminal events carry extension_count (even when 0). */
+function isUnifiedSessionEvent(session: ApiSessionEvent): boolean {
+  return (
+    session.event_type === "stopped" ||
+    typeof session.extension_count === "number"
+  );
+}
+
+function mapUnifiedSession(session: ApiSessionEvent): SessionRecord | null {
+  if (
+    session.event_type !== "completed" &&
+    session.event_type !== "skipped" &&
+    session.event_type !== "stopped"
+  ) {
+    return null;
+  }
+
+  if (session.duration_seconds == null) {
+    return null;
+  }
+
+  return {
+    id: session.client_id,
+    mode: session.mode,
+    templateLabel: session.template_label,
+    sessionCount: session.session_count,
+    outcome: session.event_type,
+    durationSeconds: session.duration_seconds,
+    plannedSeconds: session.planned_seconds ?? 0,
+    extensionCount: session.extension_count ?? 0,
+    minutesExtended: session.minutes_extended ?? 0,
+    pauseCount: session.pause_count ?? 0,
+    pausedSeconds: session.paused_seconds ?? 0,
+    startedAt:
+      session.started_at != null
+        ? new Date(session.started_at).getTime()
+        : null,
+    timestamp: new Date(session.occurred_at).getTime(),
+    templateSnapshot: fromApiTemplateSnapshot(session.template_snapshot),
   };
 }
 
 function mapSessionsFromBackend(
   sessions: ApiSessionEvent[],
-): Pick<
-  ReturnType<typeof useSessionHistoryStore.getState>,
-  "completedSessions" | "skippedSessions" | "extendedSessions"
-> {
-  const completedSessions: CompletedSession[] = [];
-  const skippedSessions: SkippedSession[] = [];
-  const extendedSessions: ExtendedSession[] = [];
+): Pick<ReturnType<typeof useSessionHistoryStore.getState>, "sessions"> {
+  const unified: SessionRecord[] = [];
+  const legacyCompleted: LegacyCompletedEvent[] = [];
+  const legacySkipped: LegacySkippedEvent[] = [];
+  const legacyExtended: LegacyExtendedEvent[] = [];
 
   for (const session of sessions) {
+    if (isUnifiedSessionEvent(session)) {
+      const mapped = mapUnifiedSession(session);
+      if (mapped) {
+        unified.push(mapped);
+      }
+      continue;
+    }
+
     const base = {
       id: session.client_id,
       mode: session.mode,
@@ -132,7 +209,7 @@ function mapSessionsFromBackend(
     };
 
     if (session.event_type === "completed" && session.duration_seconds != null) {
-      completedSessions.push({
+      legacyCompleted.push({
         ...base,
         durationSeconds: session.duration_seconds,
       });
@@ -140,7 +217,7 @@ function mapSessionsFromBackend(
     }
 
     if (session.event_type === "skipped" && session.duration_seconds != null) {
-      skippedSessions.push({
+      legacySkipped.push({
         ...base,
         durationSeconds: session.duration_seconds,
       });
@@ -148,20 +225,23 @@ function mapSessionsFromBackend(
     }
 
     if (session.event_type === "extended" && session.minutes_added != null) {
-      extendedSessions.push({
+      legacyExtended.push({
         ...base,
         minutesAdded: session.minutes_added,
       });
     }
   }
 
-  const byTimestampDesc = <T extends { timestamp: number }>(items: T[]) =>
-    [...items].sort((left, right) => right.timestamp - left.timestamp);
+  const aggregated = aggregateLegacyEvents({
+    completed: legacyCompleted,
+    skipped: legacySkipped,
+    extended: legacyExtended,
+  });
 
   return {
-    completedSessions: byTimestampDesc(completedSessions),
-    skippedSessions: byTimestampDesc(skippedSessions),
-    extendedSessions: byTimestampDesc(extendedSessions),
+    sessions: [...unified, ...aggregated].sort(
+      (left, right) => right.timestamp - left.timestamp,
+    ),
   };
 }
 
@@ -310,44 +390,18 @@ async function syncTemplateChanges(
   }
 }
 
-function postSessionEvent(
-  session: CompletedSession | SkippedSession | ExtendedSession,
-  eventType: ApiSessionEventType,
-): void {
-  const payload =
-    eventType === "extended"
-      ? {
-          event_type: eventType,
-          mode: session.mode,
-          template_label: session.templateLabel,
-          session_count: session.sessionCount,
-          duration_seconds: null,
-          minutes_added: (session as ExtendedSession).minutesAdded,
-          client_id: session.id,
-          occurred_at: new Date(session.timestamp).toISOString(),
-        }
-      : {
-          event_type: eventType,
-          mode: session.mode,
-          template_label: session.templateLabel,
-          session_count: session.sessionCount,
-          duration_seconds: (session as CompletedSession | SkippedSession)
-            .durationSeconds,
-          minutes_added: null,
-          client_id: session.id,
-          occurred_at: new Date(session.timestamp).toISOString(),
-        };
+function postSessionEvent(session: SessionRecord): void {
+  const payload = sessionRecordToSyncInput(session);
 
   void sessionsApi.create(payload).catch((error) => {
-    logSyncError(`create ${eventType} session failed`, error);
+    logSyncError(`create ${session.outcome} session failed`, error);
     syncedSessionClientIds.delete(session.id);
   });
 }
 
 function syncNewSessions(
-  current: CompletedSession[] | SkippedSession[] | ExtendedSession[],
-  previous: CompletedSession[] | SkippedSession[] | ExtendedSession[],
-  eventType: ApiSessionEventType,
+  current: SessionRecord[],
+  previous: SessionRecord[],
 ): void {
   if (isWriteThroughPaused()) {
     return;
@@ -361,7 +415,7 @@ function syncNewSessions(
     }
 
     syncedSessionClientIds.add(session.id);
-    postSessionEvent(session, eventType);
+    postSessionEvent(session);
   }
 }
 
@@ -402,17 +456,7 @@ export function setupWriteThrough(): () => void {
 
   const unsubscribeHistory = useSessionHistoryStore.subscribe(
     (state, previous) => {
-      syncNewSessions(
-        state.completedSessions,
-        previous.completedSessions,
-        "completed",
-      );
-      syncNewSessions(state.skippedSessions, previous.skippedSessions, "skipped");
-      syncNewSessions(
-        state.extendedSessions,
-        previous.extendedSessions,
-        "extended",
-      );
+      syncNewSessions(state.sessions, previous.sessions);
     },
   );
 

@@ -121,6 +121,10 @@ def merge_local_snapshot(user: User, data: dict) -> dict:
         if timezone.is_naive(occurred_at):
             occurred_at = timezone.make_aware(occurred_at, timezone.get_current_timezone())
 
+        started_at = session.get("started_at")
+        if started_at is not None and timezone.is_naive(started_at):
+            started_at = timezone.make_aware(started_at, timezone.get_current_timezone())
+
         SessionEvent.objects.create(
             user=user,
             event_type=session["event_type"],
@@ -129,6 +133,13 @@ def merge_local_snapshot(user: User, data: dict) -> dict:
             session_count=session["session_count"],
             duration_seconds=session.get("duration_seconds"),
             minutes_added=session.get("minutes_added"),
+            extension_count=session.get("extension_count", 0),
+            minutes_extended=session.get("minutes_extended", 0),
+            planned_seconds=session.get("planned_seconds"),
+            pause_count=session.get("pause_count", 0),
+            paused_seconds=session.get("paused_seconds", 0),
+            started_at=started_at,
+            template_snapshot=session.get("template_snapshot"),
             client_id=client_id,
             occurred_at=occurred_at,
         )

@@ -61,6 +61,7 @@ class SessionEvent(models.Model):
         COMPLETED = "completed", "Completed"
         SKIPPED = "skipped", "Skipped"
         EXTENDED = "extended", "Extended"
+        STOPPED = "stopped", "Stopped"
 
     class Mode(models.TextChoices):
         FOCUS = "focus", "Focus"
@@ -78,6 +79,13 @@ class SessionEvent(models.Model):
     session_count = models.PositiveSmallIntegerField()
     duration_seconds = models.PositiveIntegerField(null=True, blank=True)
     minutes_added = models.PositiveSmallIntegerField(null=True, blank=True)
+    extension_count = models.PositiveSmallIntegerField(default=0)
+    minutes_extended = models.PositiveSmallIntegerField(default=0)
+    planned_seconds = models.PositiveIntegerField(null=True, blank=True)
+    pause_count = models.PositiveSmallIntegerField(default=0)
+    paused_seconds = models.PositiveIntegerField(default=0)
+    started_at = models.DateTimeField(null=True, blank=True)
+    template_snapshot = models.JSONField(null=True, blank=True)
     client_id = models.CharField(max_length=100)
     occurred_at = models.DateTimeField()
 

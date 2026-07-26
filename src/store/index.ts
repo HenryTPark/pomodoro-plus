@@ -22,7 +22,6 @@ export {
 } from './preferencesStore';
 export {
   useSessionHistoryStore,
-  type CompletedSession,
-  type SkippedSession,
-  type ExtendedSession,
+  type SessionRecord,
+  type TemplateSnapshot,
 } from './sessionHistoryStore';
