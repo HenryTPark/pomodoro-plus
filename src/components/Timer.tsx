@@ -14,6 +14,7 @@ import {
   type TimerMode,
 } from "@/store";
 import TemplateLabels from "@/components/TemplateLabels";
+import TagPicker from "@/components/TagPicker";
 
 const timerContentWidth =
   "max-sm:w-[min(80vw,30dvh)] sm:w-[min(70vw,40vh)] sm:max-w-[45vh]";
@@ -294,6 +295,7 @@ export default function Timer() {
     <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 max-sm:gap-3 px-4 max-[360px]:px-2 py-4 text-foreground">
       <div className={timerContentWidth}>
         <TemplateLabels />
+        <TagPicker />
       </div>
 
       <div className="text-center">
