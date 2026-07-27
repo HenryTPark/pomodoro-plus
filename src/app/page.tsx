@@ -4,6 +4,7 @@ import { useUIStore } from "@/store";
 import Timer from "@/components/Timer";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
+import Insights from "@/components/Insights";
 
 export default function Home() {
   const { view } = useUIStore();
@@ -14,6 +15,8 @@ export default function Home() {
         <Settings />
       ) : view === "history" ? (
         <History />
+      ) : view === "insights" ? (
+        <Insights />
       ) : (
         <Timer />
       )}

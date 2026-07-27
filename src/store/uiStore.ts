@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AppView = 'timer' | 'settings' | 'history';
+export type AppView = 'timer' | 'settings' | 'history' | 'insights';
 
 interface UIState {
   // UI state
