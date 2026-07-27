@@ -80,6 +80,15 @@ class InsightCreateViewTests(InsightApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.data["error_code"], "keep_tracking")
 
+    def test_floor_ignores_sessions_outside_range(self):
+        for _ in range(10):
+            self._focus_completed(occurred_at=timezone.now() - timedelta(days=14))
+
+        response = self.client.post(reverse("insight-create"), {"range": "7d"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data["error_code"], "keep_tracking")
+
     @override_settings(AI_INSIGHTS_DAILY_LIMIT=2)
     def test_rejects_daily_quota_exceeded(self):
         self._seed_min_sessions()
@@ -105,6 +114,38 @@ class InsightCreateViewTests(InsightApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
         self.assertEqual(response.data["error_code"], "daily_quota_exceeded")
 
+    @override_settings(AI_INSIGHTS_DAILY_LIMIT=1)
+    @mock.patch("insights.services.generate_insight.delay")
+    def test_quota_ignores_other_users_and_prior_days(self, mock_delay):
+        self._seed_min_sessions()
+        mock_delay.return_value = mock.Mock(id="task-quota")
+
+        InsightRequest.objects.create(
+            user=self.other,
+            status=InsightRequest.Status.FAILED,
+            range_key=InsightRequest.RangeKey.THIRTY_D,
+            timezone="UTC",
+            stats_hash="other-user",
+            stats_payload={},
+        )
+        prior = InsightRequest.objects.create(
+            user=self.user,
+            status=InsightRequest.Status.FAILED,
+            range_key=InsightRequest.RangeKey.THIRTY_D,
+            timezone="UTC",
+            stats_hash="yesterday",
+            stats_payload={},
+        )
+        InsightRequest.objects.filter(pk=prior.pk).update(
+            created_at=timezone.now() - timedelta(days=1)
+        )
+
+        response = self.client.post(reverse("insight-create"), {"range": "30d"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data["status"], InsightRequest.Status.QUEUED)
+        mock_delay.assert_called_once()
+
     def test_returns_in_flight_request_without_creating_another(self):
         self._seed_min_sessions()
         in_flight = InsightRequest.objects.create(
@@ -123,6 +164,24 @@ class InsightCreateViewTests(InsightApiTestCase):
         self.assertEqual(response.data["id"], in_flight.id)
         mock_delay.assert_not_called()
         self.assertEqual(InsightRequest.objects.filter(user=self.user).count(), 1)
+
+    def test_returns_processing_in_flight_request_without_creating_another(self):
+        self._seed_min_sessions()
+        in_flight = InsightRequest.objects.create(
+            user=self.user,
+            status=InsightRequest.Status.PROCESSING,
+            range_key=InsightRequest.RangeKey.THIRTY_D,
+            timezone="UTC",
+            stats_hash="processing",
+            stats_payload={},
+        )
+
+        with mock.patch("insights.services.generate_insight.delay") as mock_delay:
+            response = self.client.post(reverse("insight-create"), {"range": "30d"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data["id"], in_flight.id)
+        mock_delay.assert_not_called()
 
     def test_returns_cached_completed_request_by_stats_hash(self):
         self._seed_min_sessions()
@@ -145,6 +204,28 @@ class InsightCreateViewTests(InsightApiTestCase):
         self.assertEqual(response.data["id"], cached.id)
         self.assertEqual(response.data["status"], InsightRequest.Status.COMPLETED)
         mock_delay.assert_not_called()
+
+    @mock.patch("insights.services.generate_insight.delay")
+    def test_creates_new_request_when_stats_hash_differs(self, mock_delay):
+        self._seed_min_sessions()
+        mock_delay.return_value = mock.Mock(id="task-new")
+        InsightRequest.objects.create(
+            user=self.user,
+            status=InsightRequest.Status.COMPLETED,
+            range_key=InsightRequest.RangeKey.THIRTY_D,
+            timezone="UTC",
+            stats_hash="different-hash",
+            stats_payload={"range_key": "30d"},
+            result=VALID_PAYLOAD,
+        )
+
+        response = self.client.post(reverse("insight-create"), {"range": "30d"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data["status"], InsightRequest.Status.QUEUED)
+        row = InsightRequest.objects.get(pk=response.data["id"])
+        self.assertNotEqual(row.stats_hash, "different-hash")
+        mock_delay.assert_called_once()
 
     @mock.patch("insights.services.generate_insight.delay")
     def test_creates_request_and_enqueues_task(self, mock_delay):
@@ -222,6 +303,27 @@ class InsightDetailViewTests(InsightApiTestCase):
         row.refresh_from_db()
         self.assertEqual(row.status, InsightRequest.Status.FAILED)
 
+    def test_reaps_stale_processing_request(self):
+        row = InsightRequest.objects.create(
+            user=self.user,
+            status=InsightRequest.Status.PROCESSING,
+            range_key=InsightRequest.RangeKey.THIRTY_D,
+            timezone="UTC",
+            stats_hash="abc",
+            stats_payload={},
+        )
+        stale_time = timezone.now() - timedelta(minutes=6)
+        InsightRequest.objects.filter(pk=row.pk).update(created_at=stale_time)
+
+        response = self.client.get(reverse("insight-detail", args=[row.pk]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], InsightRequest.Status.FAILED)
+        self.assertEqual(response.data["error_code"], STALE_ERROR_CODE)
+        row.refresh_from_db()
+        self.assertEqual(row.status, InsightRequest.Status.FAILED)
+        self.assertIsNotNone(row.completed_at)
+
     def test_does_not_reap_recent_in_flight_request(self):
         row = InsightRequest.objects.create(
             user=self.user,
@@ -235,6 +337,25 @@ class InsightDetailViewTests(InsightApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], InsightRequest.Status.PROCESSING)
+
+    def test_does_not_reap_completed_request(self):
+        row = InsightRequest.objects.create(
+            user=self.user,
+            status=InsightRequest.Status.COMPLETED,
+            range_key=InsightRequest.RangeKey.THIRTY_D,
+            timezone="UTC",
+            stats_hash="abc",
+            stats_payload={},
+            result=VALID_PAYLOAD,
+        )
+        InsightRequest.objects.filter(pk=row.pk).update(
+            created_at=timezone.now() - timedelta(minutes=30)
+        )
+
+        response = self.client.get(reverse("insight-detail", args=[row.pk]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], InsightRequest.Status.COMPLETED)
 
 
 class InsightLatestViewTests(InsightApiTestCase):

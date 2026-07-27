@@ -108,6 +108,12 @@ class GenerateInsightTaskTests(TestCase):
         mock_fetch.assert_not_called()
 
     @mock.patch("insights.tasks.fetch_insight_from_openai")
+    def test_skips_missing_request(self, mock_fetch):
+        generate_insight.delay(999_999)
+
+        mock_fetch.assert_not_called()
+
+    @mock.patch("insights.tasks.fetch_insight_from_openai")
     def test_marks_invalid_response_as_failed(self, mock_fetch):
         row = _create_request(self.user)
         mock_fetch.side_effect = InsightResponseError("Model output failed validation")
@@ -172,6 +178,24 @@ class GenerateInsightTaskTests(TestCase):
 
     @mock.patch("insights.tasks.generate_insight.retry")
     @mock.patch("insights.tasks.fetch_insight_from_openai")
+    def test_retries_timeout_errors(self, mock_fetch, mock_retry):
+        row = _create_request(self.user)
+        timeout_error = APITimeoutError(request=mock.Mock())
+        mock_fetch.side_effect = timeout_error
+        mock_retry.side_effect = timeout_error
+
+        task = generate_insight
+        task.request.retries = 0
+
+        with self.assertRaises(APITimeoutError):
+            task(row.pk)
+
+        row.refresh_from_db()
+        self.assertEqual(row.status, InsightRequest.Status.PROCESSING)
+        mock_retry.assert_called_once()
+
+    @mock.patch("insights.tasks.generate_insight.retry")
+    @mock.patch("insights.tasks.fetch_insight_from_openai")
     def test_marks_failed_after_retries_exhausted(self, mock_fetch, mock_retry):
         row = _create_request(self.user)
         timeout_error = APITimeoutError(request=mock.Mock())
@@ -187,6 +211,28 @@ class GenerateInsightTaskTests(TestCase):
         row.refresh_from_db()
         self.assertEqual(row.status, InsightRequest.Status.FAILED)
         self.assertEqual(row.error_code, "openai_timeout")
+
+    @mock.patch("insights.tasks.generate_insight.retry")
+    @mock.patch("insights.tasks.fetch_insight_from_openai")
+    def test_marks_failed_after_rate_limit_retries_exhausted(self, mock_fetch, mock_retry):
+        row = _create_request(self.user)
+        rate_limit_error = RateLimitError(
+            "rate limit",
+            response=mock.Mock(status_code=429),
+            body=None,
+        )
+        mock_fetch.side_effect = rate_limit_error
+        mock_retry.side_effect = rate_limit_error
+
+        task = generate_insight
+        task.request.retries = task.max_retries
+
+        with self.assertRaises(RateLimitError):
+            task(row.pk)
+
+        row.refresh_from_db()
+        self.assertEqual(row.status, InsightRequest.Status.FAILED)
+        self.assertEqual(row.error_code, "openai_rate_limited")
 
     @mock.patch("insights.tasks.fetch_insight_from_openai")
     def test_marks_soft_time_limit_as_failed(self, mock_fetch):
