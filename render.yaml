@@ -1,10 +1,13 @@
-# Render Blueprint — Pomodoro Plus Django API
+# Render Blueprint — Pomodoro Plus Django API + Celery worker
 #
 # Deploy: connect this repo in the Render dashboard and apply the blueprint,
-# or create a Web Service manually with root directory "backend".
+# or create services manually with root directory "backend".
 #
 # Use Neon (free) for Postgres — paste DATABASE_URL in the Render env vars.
 # https://neon.tech
+#
+# AI insights: free Key Value (Redis broker) + Starter worker. Set OPENAI_API_KEY
+# (and optionally OPENAI_MODEL) on both the web and worker services.
 
 services:
   - type: web
@@ -36,3 +39,51 @@ services:
         sync: false
       - key: GOOGLE_OAUTH_CALLBACK_URL
         sync: false
+      - key: REDIS_URL
+        fromService:
+          name: pomodoro-plus-redis
+          type: keyvalue
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: AI_INSIGHTS_DAILY_LIMIT
+        value: "5"
+
+  - type: worker
+    name: pomodoro-plus-worker
+    runtime: python
+    rootDir: backend
+    plan: starter
+    buildCommand: ./build.sh
+    startCommand: celery -A config worker --loglevel=info --concurrency=2
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          name: pomodoro-plus-api
+          type: web
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: pomodoro-plus-redis
+          type: keyvalue
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: AI_INSIGHTS_DAILY_LIMIT
+        value: "5"
+
+  - type: keyvalue
+    name: pomodoro-plus-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []

@@ -219,3 +219,36 @@ CSRF_COOKIE_SECURE = not DEBUG
 # Render (and similar proxies) terminate TLS; Django must trust X-Forwarded-Proto.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
+# --- Redis / Celery / cache ------------------------------------------------
+# Local default matches docker-compose ``redis`` (port 6379). On Render,
+# REDIS_URL is wired from the Key Value instance via fromService.
+REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 120
+CELERY_TASK_SOFT_TIME_LIMIT = 100
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+    }
+}
+
+# Tests should not require a live Redis; use the local memory cache.
+if "test" in sys.argv:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+
+
+# --- AI insights -----------------------------------------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+AI_INSIGHTS_DAILY_LIMIT = int(os.getenv("AI_INSIGHTS_DAILY_LIMIT", "5"))
