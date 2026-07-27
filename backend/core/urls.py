@@ -18,5 +18,6 @@ auth_urlpatterns = [
 api_urlpatterns = [
     path("profile/", ProfileView.as_view(), name="profile"),
     path("sync/", SyncView.as_view(), name="sync"),
+    path("", include("insights.urls")),
     path("", include(router.urls)),
 ]
