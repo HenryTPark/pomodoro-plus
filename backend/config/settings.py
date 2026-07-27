@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     # Local
     "core",
+    "insights",
 ]
 
 SITE_ID = 1
