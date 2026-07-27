@@ -29,6 +29,7 @@ class UserProfile(models.Model):
     active_tag = models.CharField(max_length=50, null=True, blank=True)
     theme = models.CharField(max_length=10, choices=Theme.choices, default=Theme.DARK)
     sound_enabled = models.BooleanField(default=True)
+    timezone = models.CharField(max_length=64, default="UTC")
 
     def __str__(self) -> str:
         return f"Profile for {self.user}"

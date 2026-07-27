@@ -177,6 +177,7 @@ export interface ApiUserProfile {
   active_tag: string | null;
   theme: ApiTheme;
   sound_enabled: boolean;
+  timezone: string;
 }
 
 export interface ApiTemplate {
@@ -235,6 +236,7 @@ export interface SyncProfileInput {
   active_tag?: string | null;
   theme?: ApiTheme;
   sound_enabled?: boolean;
+  timezone?: string;
 }
 
 export interface SyncSessionInput {
@@ -320,4 +322,67 @@ export const syncApi = {
       method: "POST",
       body: JSON.stringify(snapshot),
     }),
+};
+
+export type InsightRangeKey = "7d" | "30d" | "all";
+
+export type InsightStatus = "queued" | "processing" | "completed" | "failed";
+
+export type InsightConfidence = "high" | "medium" | "low";
+
+export interface InsightPattern {
+  title: string;
+  evidence: string;
+  confidence: InsightConfidence;
+}
+
+export interface InsightTemplateRecommendation {
+  template_label: string;
+  reason: string;
+  suggested_experiment: string;
+}
+
+export interface InsightResult {
+  summary: string;
+  patterns: InsightPattern[];
+  template_recommendations: InsightTemplateRecommendation[];
+  warnings: string[];
+  next_steps: string[];
+}
+
+export interface ApiInsightRequest {
+  id: number;
+  status: InsightStatus;
+  range_key: InsightRangeKey;
+  timezone: string;
+  result: InsightResult | null;
+  error_code: string | null;
+  error_detail: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface InsightCreateInput {
+  range: InsightRangeKey;
+}
+
+export interface InsightApiErrorBody {
+  error_code?: string;
+  detail?: string;
+}
+
+export const insightsApi = {
+  create: (input: InsightCreateInput) =>
+    apiRequest<ApiInsightRequest>("/api/insights/", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  get: (id: number) => apiRequest<ApiInsightRequest>(`/api/insights/${id}/`),
+
+  getLatest: (range: InsightRangeKey) =>
+    apiRequest<ApiInsightRequest>(
+      `/api/insights/latest/?range=${encodeURIComponent(range)}`,
+    ),
 };

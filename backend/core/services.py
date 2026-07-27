@@ -16,6 +16,7 @@ PROFILE_FIELDS = (
     "active_tag",
     "theme",
     "sound_enabled",
+    "timezone",
 )
 
 

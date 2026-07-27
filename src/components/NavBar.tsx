@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { History, Settings, Timer } from "lucide-react";
+import { History, Settings, Sparkles, Timer } from "lucide-react";
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import AuthControls from "@/components/AuthControls";
@@ -46,6 +46,18 @@ export default function NavBar() {
             >
               <div className="flex justify-around items-center">
                 <History className="size-7" />
+              </div>
+            </Button>
+
+            <Button
+              variant={view === "insights" ? "default" : "secondary"}
+              size="xl"
+              onClick={() => setView("insights")}
+              title="Insights"
+              className={navButtonClass}
+            >
+              <div className="flex justify-around items-center">
+                <Sparkles className="size-7" />
               </div>
             </Button>
 
