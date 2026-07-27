@@ -32,6 +32,7 @@ class ProfileApiTests(ApiTestCase):
         self.assertEqual(response.data["active_template_label"], "Classic")
         self.assertIsNone(response.data["active_tag"])
         self.assertEqual(response.data["theme"], "dark")
+        self.assertEqual(response.data["timezone"], "UTC")
 
     def test_put_profile(self):
         response = self.client.put(
@@ -45,6 +46,7 @@ class ProfileApiTests(ApiTestCase):
                 "active_tag": "Deep Work",
                 "theme": "light",
                 "sound_enabled": False,
+                "timezone": "America/Los_Angeles",
             },
             format="json",
         )
@@ -55,6 +57,28 @@ class ProfileApiTests(ApiTestCase):
         self.assertEqual(profile.active_tag, "Deep Work")
         self.assertEqual(profile.theme, "light")
         self.assertFalse(profile.sound_enabled)
+        self.assertEqual(profile.timezone, "America/Los_Angeles")
+
+    def test_put_profile_rejects_invalid_timezone(self):
+        response = self.client.put(
+            reverse("profile"),
+            {
+                "focus_minutes": 25,
+                "break_minutes": 5,
+                "long_break_minutes": 15,
+                "cycle": 4,
+                "active_template_label": "Classic",
+                "theme": "dark",
+                "sound_enabled": True,
+                "timezone": "Not/A_Timezone",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("timezone", response.data)
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.timezone, "UTC")
 
     def test_put_profile_normalizes_blank_active_tag_to_null(self):
         response = self.client.put(
@@ -268,6 +292,7 @@ class SyncApiTests(ApiTestCase):
                     "focus_minutes": 30,
                     "theme": "system",
                     "active_tag": "Deep Work",
+                    "timezone": "America/New_York",
                 },
                 "templates": {
                     "Side Project": {
@@ -298,11 +323,13 @@ class SyncApiTests(ApiTestCase):
         self.assertEqual(profile.focus_minutes, 30)
         self.assertEqual(profile.theme, "system")
         self.assertEqual(profile.active_tag, "Deep Work")
+        self.assertEqual(profile.timezone, "America/New_York")
         self.assertTrue(Template.objects.filter(user=self.user, label="Side Project").exists())
         self.assertEqual(SessionEvent.objects.filter(user=self.user).count(), 1)
         event = SessionEvent.objects.get(user=self.user, client_id="sync-1")
         self.assertEqual(event.tag, "Deep Work")
         self.assertEqual(response.data["profile"]["active_tag"], "Deep Work")
+        self.assertEqual(response.data["profile"]["timezone"], "America/New_York")
         synced = next(s for s in response.data["sessions"] if s["client_id"] == "sync-1")
         self.assertEqual(synced["tag"], "Deep Work")
         self.assertIn("profile", response.data)

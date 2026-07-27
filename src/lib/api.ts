@@ -177,6 +177,7 @@ export interface ApiUserProfile {
   active_tag: string | null;
   theme: ApiTheme;
   sound_enabled: boolean;
+  timezone: string;
 }
 
 export interface ApiTemplate {
@@ -235,6 +236,7 @@ export interface SyncProfileInput {
   active_tag?: string | null;
   theme?: ApiTheme;
   sound_enabled?: boolean;
+  timezone?: string;
 }
 
 export interface SyncSessionInput {

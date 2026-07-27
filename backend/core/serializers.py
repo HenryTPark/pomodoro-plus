@@ -1,7 +1,11 @@
+from zoneinfo import available_timezones
+
 from dj_rest_auth.serializers import UserDetailsSerializer
 from rest_framework import serializers
 
 from core.models import SessionEvent, Template, UserProfile
+
+_AVAILABLE_TIMEZONES = available_timezones()
 
 
 def normalize_tag(value: str | None) -> str | None:
@@ -10,6 +14,12 @@ def normalize_tag(value: str | None) -> str | None:
         return None
     trimmed = value.strip()
     return trimmed or None
+
+
+def validate_iana_timezone(value: str) -> str:
+    if value not in _AVAILABLE_TIMEZONES:
+        raise serializers.ValidationError("Invalid IANA timezone.")
+    return value
 
 
 class UserSerializer(UserDetailsSerializer):
@@ -24,6 +34,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     active_tag = serializers.CharField(
         max_length=50, required=False, allow_null=True, allow_blank=True
     )
+    timezone = serializers.CharField(max_length=64, required=False)
 
     class Meta:
         model = UserProfile
@@ -36,10 +47,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "active_tag",
             "theme",
             "sound_enabled",
+            "timezone",
         )
 
     def validate_active_tag(self, value: str | None) -> str | None:
         return normalize_tag(value)
+
+    def validate_timezone(self, value: str) -> str:
+        return validate_iana_timezone(value)
 
 
 class TemplateSerializer(serializers.ModelSerializer):
@@ -135,9 +150,13 @@ class SyncProfileInputSerializer(serializers.Serializer):
     )
     theme = serializers.ChoiceField(choices=UserProfile.Theme.choices, required=False)
     sound_enabled = serializers.BooleanField(required=False)
+    timezone = serializers.CharField(max_length=64, required=False)
 
     def validate_active_tag(self, value: str | None) -> str | None:
         return normalize_tag(value)
+
+    def validate_timezone(self, value: str) -> str:
+        return validate_iana_timezone(value)
 
 
 class SyncSessionInputSerializer(serializers.Serializer):

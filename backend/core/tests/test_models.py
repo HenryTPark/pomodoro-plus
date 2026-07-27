@@ -29,6 +29,7 @@ class UserProfileModelTests(TestCase):
         self.assertIsNone(profile.active_tag)
         self.assertEqual(profile.theme, UserProfile.Theme.DARK)
         self.assertTrue(profile.sound_enabled)
+        self.assertEqual(profile.timezone, "UTC")
 
     def test_one_profile_per_user(self):
         UserProfile.objects.create(user=self.user)

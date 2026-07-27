@@ -137,6 +137,7 @@ function buildLocalSnapshot(): SyncInput {
       active_tag: settings.activeTag,
       theme: preferences.theme,
       sound_enabled: preferences.soundEnabled,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
     templates,
     sessions: history.sessions.map(sessionRecordToSyncInput),
@@ -308,6 +309,7 @@ function buildProfilePayload(): ApiUserProfile {
     active_tag: settings.activeTag,
     theme: preferences.theme,
     sound_enabled: preferences.soundEnabled,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 }
 

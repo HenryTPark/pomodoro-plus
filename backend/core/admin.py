@@ -5,7 +5,14 @@ from core.models import SessionEvent, Template, UserProfile
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "active_template_label", "active_tag", "theme", "sound_enabled")
+    list_display = (
+        "user",
+        "active_template_label",
+        "active_tag",
+        "theme",
+        "timezone",
+        "sound_enabled",
+    )
     search_fields = ("user__email", "user__username", "active_tag")
 
 
