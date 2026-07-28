@@ -5,6 +5,7 @@ import { History, Settings, Sparkles, Timer } from "lucide-react";
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import AuthControls from "@/components/AuthControls";
+import { TomatoIcon } from "@/components/TomatoIcon";
 
 const navButtonClass = "h-11 px-4 cursor-pointer";
 
@@ -16,12 +17,18 @@ export default function NavBar() {
       <div className="mx-auto max-w-7xl px-3 sm:px-8 lg:px-10">
         <div className="flex h-[var(--nav-height)] items-center justify-between">
           <div className="shrink-0">
-            <h1
+            <Button
+              variant="ghost"
               onClick={() => setView("timer")}
-              className="text-xl sm:text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-foreground cursor-pointer"
+              aria-label="Pomodoro+"
+              title="Pomodoro+"
+              className="h-auto cursor-pointer px-2 py-1 sm:px-3"
             >
-              Pomodoro+
-            </h1>
+              <TomatoIcon className="size-8 sm:hidden" />
+              <span className="hidden text-xl font-semibold tracking-tight sm:inline sm:text-[clamp(2rem,4vw,3rem)]">
+                Pomodoro+
+              </span>
+            </Button>
           </div>
 
           <div className="flex items-center gap-3">
