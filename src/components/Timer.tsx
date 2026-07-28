@@ -15,6 +15,10 @@ import {
 } from "@/store";
 import TemplateLabels from "@/components/TemplateLabels";
 import TagPicker from "@/components/TagPicker";
+import {
+  playSessionEndSound,
+  unlockSessionSound,
+} from "@/lib/sessionSound";
 
 const timerContentWidth =
   "max-sm:w-[min(80vw,30dvh)] sm:w-[min(70vw,40vh)] sm:max-w-[45vh]";
@@ -106,26 +110,7 @@ export default function Timer() {
       return;
     }
 
-    const audioContext = new (
-      window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    )();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.frequency.value = 800;
-    oscillator.type = "sine";
-
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.5,
-    );
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
+    void playSessionEndSound();
   }, [soundEnabled]);
 
   const setPaused = useCallback(
@@ -134,6 +119,7 @@ export default function Timer() {
       const timer = useTimerStore.getState();
 
       if (!value) {
+        unlockSessionSound();
         if (timer.startedAt === null) {
           setStartedAt(now);
         }
